@@ -62,7 +62,7 @@ namespace Equestria{
 
         Polygon();
         Polygon(const std::vector<Point>& pl, const std::vector<Point>& nl,
-                const std::vector<Point>& tl, int lab, int len);
+                const std::vector<Point>& tl, int lab);
     };
 
     Point operator*(double, const Point&);

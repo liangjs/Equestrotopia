@@ -29,14 +29,14 @@ namespace Equestria{
 
     Polygon::Polygon():num(0),label(0){}
     Polygon::Polygon(const std::vector<Point>& pl, const std::vector<Point>& nl,
-                     const std::vector<Point>& tl, int lab, int len)
-                     :pList(pl),normvList(nl),texList(tl),num(len),label(lab){
+                     const std::vector<Point>& tl, int lab)
+                     :pList(pl),normvList(nl),texList(tl),num(pl.size()),label(lab){
         double s = 0;
-        for (int i = 0; i < len; ++i)
-            for (int j = i + 1; j < len; ++j)
-                for (int k = j + 1; k < len; ++k){
+        for (int i = 0; i < num; ++i)
+            for (int j = i + 1; j < num; ++j)
+                for (int k = j + 1; k < num; ++k){
                     double ts = calcArea(pList[i], pList[j], pList[k]);
-                    if (ts > s) c1 = i, c2 = j, c3 = k;
+                    if (ts > s) c1 = i, c2 = j, c3 = k, s = ts;
                 }
         Point ta = c2 - c1, tb = c3 - c1;
         xy = ta.x * tb.y -ta.y * tb.x;
