@@ -6,12 +6,15 @@
 const double EPS=1E-7;
 
 namespace Equestria{
+    class Point;
+    class Ray;
+    class Polygon;
+    class Sphere;
 
     class Point{
     public:
         double x, y, z;
 
-        Point();
         Point(int x, int y, int z);
         Point operator+(const Point&) const;
         Point& operator+=(const Point&);
@@ -25,7 +28,7 @@ namespace Equestria{
 
         double len() const;
         double len2() const;
-    }
+    };
 
     class Ray{
     public:
@@ -36,7 +39,7 @@ namespace Equestria{
 
         bool intersect(const Sphere&, Point*) const;
         bool intersect(const Polygon&, Point*) const;
-    }
+    };
 
     class Sphere{
     public:
@@ -47,19 +50,20 @@ namespace Equestria{
         Sphere(const Point&, double r);
         Sphere(double ox, double oy, double oz, double r);
 
-    }
+    };
 
     class Polygon{
     public:
         int c1, c2, c3, label, num;
         double xy, xz, yz;
         Point normvf;
-        vector<Point> pList, normvList, texList;
+        std::vector<Point> pList, normvList, texList;
 
 
         Polygon();
-        Polygon(const vector<Point>& pl, const vector<Point>& nl, const vector<Point>& tl, int lab, int len);
-    }
+        Polygon(const std::vector<Point>& pl, const std::vector<Point>& nl,
+                const std::vector<Point>& tl, int lab, int len);
+    };
 
     Point operator*(double, const Point&);
 
@@ -67,7 +71,7 @@ namespace Equestria{
     Point crossProduct(const Point&, const Point&);
     double determinant(const Point&, const Point&, const Point&);
     double calcArea(const Point&, const Point&, const Point&);
-    template<class T> sqr(const T& x){return x*x;};
+    template<class T> T sqr(const T& x){return x*x;};
 }
 
 

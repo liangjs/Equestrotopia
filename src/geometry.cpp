@@ -6,7 +6,6 @@
 
 namespace Equestria{
 
-    Point::Point():x(0),y(0),z(0){}
     Point::Point(int tx = 0, int ty = 0, int tz = 0):x(tx),y(ty),z(tz){}
     Point Point::operator+(const Point& a) const{return Point(x + a.x, y + a.y, z + a.z);}
     Point& Point::operator+=(const Point &a){x += a.x; y += a.y; z += a.z; return *this;}
@@ -15,7 +14,7 @@ namespace Equestria{
     Point Point::operator-() const{return Point(-x, -y, -z);}
     Point Point::operator*(double k) const{return Point(k * x, k * y, k * z);}
     Point& Point::operator*=(double k){x *= k; y *= k; z *= k; return *this;}
-    Point operator*(double k, const Point& a){return a*k}
+    Point operator*(double k, const Point& a){return a*k;}
     Point Point::operator/(double k) const{return Point(x / k, y / k, z / k);}
     Point& Point::operator/=(double k){x /= k; y /= k; z /= k; return *this;}
     double Point::len2() const{return sqr(x)+sqr(y)+sqr(z);}
@@ -29,8 +28,9 @@ namespace Equestria{
     Sphere::Sphere(double ox, double oy, double oz, double r):center(ox, oy, oz),radius(r){}
 
     Polygon::Polygon():num(0),label(0){}
-    Polygon::Polygon(const vector<Point>& pl, const vector<Point>& nl,
-                     const vector<Point>& tl, int lab, int len):pList(pl),normvList(nl),texList(tl),num(len),label(lab){
+    Polygon::Polygon(const std::vector<Point>& pl, const std::vector<Point>& nl,
+                     const std::vector<Point>& tl, int lab, int len)
+                     :pList(pl),normvList(nl),texList(tl),num(len),label(lab){
         double s = 0;
         for (int i = 0; i < len; ++i)
             for (int j = i + 1; j < len; ++j)
@@ -64,7 +64,7 @@ namespace Equestria{
     }
 
     bool Ray::intersect(const Polygon& s, Point* p) const{
-        Point ts = bgn - s.pList[c1];
+        Point ts = bgn - s.pList[s.c1];
         double k = vec.x * s.yz - vec.y * s.xz + vec.z * s.xy,
                b = ts.x * s.yz - ts.y * s.xz + ts.z * s.xy;
         if (fabs(k) < EPS) return 0;
@@ -73,17 +73,17 @@ namespace Equestria{
 
         double txy = s.normvf.x * ret.y - s.normvf.y * ret.x,
                txz = s.normvf.x * ret.z - s.normvf.z * ret.x,
-               tyz = s.normvf.y * ret.z - s.normvf.z * ret.y,
-        for (int i = 0; i < len-1; ++i)
+               tyz = s.normvf.y * ret.z - s.normvf.z * ret.y;
+        for (int i = 0; i < s.num - 1; ++i)
             if (determinant(s.pList[i], s.pList[i + 1], s.normvf) +
                 (s.pList[i].x - s.pList[i + 1].x) * tyz -
                 (s.pList[i].y - s.pList[i + 1].y) * txz +
-                (s.pList[i].z - s.pList[i + 1].z) * txy <-EPS) return 0;
-        if (determinant(s.pList[len - 1], s.pList[1], s.normvf) +
-            (s.pList[len - 1].x - s.pList[1].x) * tyz -
-            (s.pList[len - 1].y - s.pList[1].y) * txz +
-            (s.pList[len - 1].z - s.pList[1].z) * txy <-EPS) return 0;
-            
+                (s.pList[i].z - s.pList[i + 1].z) * txy < -EPS) return 0;
+        if (determinant(s.pList[s.num - 1], s.pList[1], s.normvf) +
+            (s.pList[s.num - 1].x - s.pList[1].x) * tyz -
+            (s.pList[s.num - 1].y - s.pList[1].y) * txz +
+            (s.pList[s.num - 1].z - s.pList[1].z) * txy < -EPS) return 0;
+
         *p = ret;
         return 1;
     }
