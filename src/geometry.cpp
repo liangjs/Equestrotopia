@@ -7,7 +7,7 @@
 namespace Equestria{
 
     Point::Point():x(0),y(0),z(0){}
-    Point::Point(int tx, int ty, int tz):x(tx),y(ty),z(tz){}
+    Point::Point(int tx = 0, int ty = 0, int tz = 0):x(tx),y(ty),z(tz){}
     Point Point::operator+(const Point& a) const{return Point(x + a.x, y + a.y, z + a.z);}
     Point& Point::operator+=(const Point &a){x += a.x; y += a.y; z += a.z; return *this;}
     Point Point::operator-(const Point &a) const{return Point(x - a.x, y - a.y, z - a.z);}
@@ -15,6 +15,7 @@ namespace Equestria{
     Point Point::operator-() const{return Point(-x, -y, -z);}
     Point Point::operator*(double k) const{return Point(k * x, k * y, k * z);}
     Point& Point::operator*=(double k){x *= k; y *= k; z *= k; return *this;}
+    Point operator*(double k, const Point& a){return a*k}
     Point Point::operator/(double k) const{return Point(x / k, y / k, z / k);}
     Point& Point::operator/=(double k){x /= k; y /= k; z /= k; return *this;}
     double Point::len2() const{return sqr(x)+sqr(y)+sqr(z);}
@@ -26,6 +27,23 @@ namespace Equestria{
     Sphere::Sphere():center(),radius(0){}
     Sphere::Sphere(const Point& a, double r):center(a),radius(r){}
     Sphere::Sphere(double ox, double oy, double oz, double r):center(ox, oy, oz),radius(r){}
+
+    Polygon::Polygon():num(0),label(0){}
+    Polygon::Polygon(const vector<Point>& pl, const vector<Point>& nl,
+                     const vector<Point>& tl, int lab, int len):pList(pl),normvList(nl),texList(tl),num(len),label(lab){
+        double s = 0;
+        for (int i = 0; i < len; ++i)
+            for (int j = i + 1; j < len; ++j)
+                for (int k = j + 1; k < len; ++k){
+                    double ts = calcArea(pList[i], pList[j], pList[k]);
+                    if (ts > s) c1 = i, c2 = j, c3 = k;
+                }
+        Point ta = c2 - c1, tb = c3 - c1;
+        xy = ta.x * tb.y -ta.y * tb.x;
+        xz = ta.x * tb.z -ta.z * tb.x;
+        yz = ta.y * tb.z -ta.z * tb.y;
+        normvf = Point(yz, -xz, xy);
+    }
 
     bool Ray::intersect(const Sphere& s, Point* p) const{
         Point t = bgn - s.center;
@@ -45,15 +63,49 @@ namespace Equestria{
         return 1;
     }
 
+    bool Ray::intersect(const Polygon& s, Point* p) const{
+        Point ts = bgn - s.pList[c1];
+        double k = vec.x * s.yz - vec.y * s.xz + vec.z * s.xy,
+               b = ts.x * s.yz - ts.y * s.xz + ts.z * s.xy;
+        if (fabs(k) < EPS) return 0;
+        double t = -b / k;
+        Point ret = bgn + t * vec;
 
+        double txy = s.normvf.x * ret.y - s.normvf.y * ret.x,
+               txz = s.normvf.x * ret.z - s.normvf.z * ret.x,
+               tyz = s.normvf.y * ret.z - s.normvf.z * ret.y,
+        for (int i = 0; i < len-1; ++i)
+            if (determinant(s.pList[i], s.pList[i + 1], s.normvf) +
+                (s.pList[i].x - s.pList[i + 1].x) * tyz -
+                (s.pList[i].y - s.pList[i + 1].y) * txz +
+                (s.pList[i].z - s.pList[i + 1].z) * txy <-EPS) return 0;
+        if (determinant(s.pList[len - 1], s.pList[1], s.normvf) +
+            (s.pList[len - 1].x - s.pList[1].x) * tyz -
+            (s.pList[len - 1].y - s.pList[1].y) * txz +
+            (s.pList[len - 1].z - s.pList[1].z) * txy <-EPS) return 0;
+            
+        *p = ret;
+        return 1;
+    }
 
-    Point operator*(double k, const Point& a){return a*k}
+    double dotsProduct(const Point& a, const Point& b){
+        return a.x * b.x + a.y * b.y + a.z * b.z;
+    }
 
-    double dotsProduct(Point a, Point b){return a.x * b.x + a.y * b.y + a.z * b.z;}
-    Point crossProduct(Point a, Point b){
+    Point crossProduct(const Point& a, const Point& b){
         return Point(a.y * b.z - a.z * b.y,
                     -a.x * b.z + a.z * b.x,
                      a.x * b.y - a.y * b.x);
+    }
+
+    double determinant(const Point& a, const Point& b, const Point& c){
+        return a.x * b.y * c.z - a.x * b.z * c.y +
+               a.y * b.z * c.x - a.y * b.x * c.z +
+               a.z * b.x * c.y - a.z * b.y * c.x;
+    }
+
+    double calcArea(const Point& a, const Point& b, const Point& c){
+        return crossProduct(b - a, c - b).len() / 2;
     }
 
 
