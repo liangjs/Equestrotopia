@@ -1,11 +1,28 @@
-#include "objer.h"
+#include "input.h"
+#include "brdf.h"
 #include <map>
 #include <cctype>
-#include <fstream>
 #include <cstdlib>
+#include <fstream>
 
 namespace Equestria {
-    extern std::map<std::string, int> mtlIndex; // from model.h
+    std::vector<Polygon> polygon;
+    std::map<std::string, int> mtlIndex;
+    std::vector<Material> material;
+
+    void readModel(const std::string &file) {
+        std::ifstream fin(file);
+        int num;
+        fin >> num; // read obj (and load mtl file according to "mtllib" in obj)
+        std::string fname;
+        for (int i = 0; i < num; ++i) {
+            fin >> fname;
+            objRead(fname);
+        }
+        fin.close();
+        for (auto i : mtlIndex) // read brdf
+            BRDF::read_brdf((i.first + ".binary").c_str(), material[i.second].brdf);
+    }
 
     typedef std::vector<std::string>::iterator vsi_t;
 
@@ -85,10 +102,12 @@ namespace Equestria {
                 }
                 polygon.push_back(Polygon(pl, nl, tl, material));
             }
-            else if (op == "mtllib")   // external .mtl file
-                ;
+            else if (op == "mtllib") { // external .mtl file
+                for (vsi_t i = split.begin() + 1; i != split.end(); ++i)
+                    mtlRead(*i);
+            }
             else if (op == "usemtl") // use material
-                material = mtlIndex[*split.rbegin()];
+                material = mtlIndex[split.back()];
             else if (op == "o") // object
                 ;
             else if (op == "g") // group
@@ -99,4 +118,22 @@ namespace Equestria {
         fin.close();
     }
 
+    void mtlRead(const std::string &file) {
+        std::ifstream fin(file);
+        std::string line;
+        Material *pm = NULL;
+        while (getline(fin, line)) {
+            std::vector<std::string> split;
+            strSplit(line, split);
+            std::string op = split.front();
+            if (op == "newmtl") {
+                int num = mtlIndex.size();
+                mtlIndex.insert(std::make_pair(split.back(), num));
+                material.push_back(Material());
+                pm = &material.back();
+            }
+            else if (op == "Ka")
+                ;
+        }
+    }
 }
