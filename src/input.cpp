@@ -4,6 +4,7 @@
 #include <cctype>
 #include <cstdlib>
 #include <fstream>
+#include <iostream>
 
 namespace Equestria {
     std::vector<Polygon> polygon;
@@ -20,8 +21,11 @@ namespace Equestria {
             objRead(fname);
         }
         fin.close();
-        for (auto i : mtlIndex) // read brdf
-            BRDF::read_brdf((i.first + ".binary").c_str(), material[i.second].brdf);
+        for (auto i : mtlIndex) { // read brdf
+            bool ok = BRDF::read_brdf((i.first + ".binary").c_str(), material[i.second].brdf);
+            if (!ok)
+                std::cerr << "cannot read BRDF file \"" << i.first << ".binary\"" << std::endl;
+        }
     }
 
     typedef std::vector<std::string>::iterator vsi_t;
@@ -73,8 +77,6 @@ namespace Equestria {
                 vlist.push_back(__getObjPoint(++split.begin(), split.end()));
             else if (op == "vn") // vertex normal
                 vnlist.push_back(__getObjPoint(++split.begin(), split.end()));
-            else if (op == "vp") // Parameter space vertices
-                ;
             else if (op == "vt") // texture coordinate
                 vtlist.push_back(__getObjPoint(++split.begin(), split.end()));
             else if (op == "f") { // face
@@ -108,12 +110,8 @@ namespace Equestria {
             }
             else if (op == "usemtl") // use material
                 material = mtlIndex[split.back()];
-            else if (op == "o") // object
-                ;
-            else if (op == "g") // group
-                ;
-            else if (op == "s") // smooth shading
-                ;
+            else
+                std::cerr << file << ": operation \"" << op << "\"not supported" << std::endl;
         }
         fin.close();
     }
@@ -132,8 +130,32 @@ namespace Equestria {
                 material.push_back(Material());
                 pm = &material.back();
             }
-            else if (op == "Ka")
+            else if (op == "#") // comment
                 ;
+            else if (op == "Ka")
+                pm->mtl.Ka = __getObjPoint(++split.begin(), split.end());
+            else if (op == "Kd")
+                pm->mtl.Kd = __getObjPoint(++split.begin(), split.end());
+            else if (op == "Ks")
+                pm->mtl.Ks = __getObjPoint(++split.begin(), split.end());
+            else if (op == "Tf")
+                pm->mtl.Tf = __getObjPoint(++split.begin(), split.end());
+            else if (op == "Ns")
+                pm->mtl.Ns = atof(split.back().c_str());
+            else if (op == "d")
+                pm->mtl.Tr = 1 - atof(split.back().c_str());
+            else if (op == "Tr")
+                pm->mtl.Tr = atof(split.back().c_str());
+            else if (op == "illum")
+                pm->mtl.illum = atoi(split.back().c_str());
+            else if (op == "map_Ka")
+                pm->mtl.mapKa = split.back();
+            else if (op == "map_Ks")
+                pm->mtl.mapKs = split.back();
+            else if (op == "map_bump" || op == "bump")
+                pm->mtl.mapBump = split.back();
+            else
+                std::cerr << file << ": operation \"" << op << "\"not supported" << std::endl;
         }
     }
 }
