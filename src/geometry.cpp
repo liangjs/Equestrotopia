@@ -6,6 +6,8 @@
 
 namespace Equestria {
 
+    extern std::vector<Polygon> polygon;
+
     Point::Point(int tx, int ty, int tz): x(tx), y(ty), z(tz) {}
     Point Point::operator+(const Point &a) const {
         return Point(x + a.x, y + a.y, z + a.z);
@@ -63,18 +65,44 @@ namespace Equestria {
     Sphere::Sphere(const Point &a, double r): center(a), radius(r) {}
     Sphere::Sphere(double ox, double oy, double oz, double r): center(ox, oy, oz), radius(r) {}
 
-    Polygon::Polygon(): num(0), label(0) {}
+    Polygon::Polygon(): num(0), label(0), xmin(0), ymin(0), zmin(0), xmax(0), ymax(0), zmax(0) {}
+
+    AdjTable::Node::Node(): x(0), nxt(nullptr) {}
+    AdjTable::Node::Node(int loca,Node* nx): x(loca), nxt(nx) {}
+    AdjTable::AdjTable(): head(nullptr) {}
+
+    void AdjTable::reArrange(std::vector<int>::iterator bg, std::vector<int>::iterator ed) {
+        Node* p = head;
+        while (p) {
+            Node* q = p; p = p->nxt;
+            delete q;
+        }
+        head = nullptr;
+        for (std::vector<int>::iterator i = bg; i != ed; ++i)
+            head = new Node{*i, head};
+    }
+
+    KDTree::KDTree(): lkList(), nxt({nullptr, nullptr}), xmin(0), ymin(0), zmin(0), xmax(0), ymax(0), zmax(0) {}
+
     Polygon::Polygon(const std::vector<Point> &pl, const std::vector<Point> &nl,
                      const std::vector<Point> &tl, int lab)
-        : pList(pl), normvList(nl), texList(tl), num(pl.size()), label(lab) {
+        : pList(pl), normvList(nl), texList(tl), num(pl.size()), label(lab),
+          xmin(INF), ymin(INF), zmin(INF), xmax(-INF), ymax(-INF), zmax(-INF) {
         double s = 0;
-        for (int i = 0; i < num; ++i)
+        for (int i = 0; i < num; ++i) {
             for (int j = i + 1; j < num; ++j)
                 for (int k = j + 1; k < num; ++k) {
                     double ts = calcArea(pList[i], pList[j], pList[k]);
                     if (ts > s)
                         c1 = i, c2 = j, c3 = k, s = ts;
                 }
+            xmin = std::min(xmin, pList[i].x);
+            xmax = std::max(xmax, pList[i].x);
+            ymin = std::min(ymin, pList[i].y);
+            ymax = std::max(ymax, pList[i].y);
+            zmin = std::min(zmin, pList[i].z);
+            zmax = std::max(zmax, pList[i].z);
+        }
         Point ta = c2 - c1, tb = c3 - c1;
         xy = ta.x * tb.y - ta.y * tb.x;
         xz = ta.x * tb.z - ta.z * tb.x;
@@ -132,6 +160,57 @@ namespace Equestria {
 
         *p = ret;
         return 1;
+    }
+
+    KDTree::KDTree(std::vector<int>::iterator bg, std::vector<int>::iterator ed)
+            : lkList(), xmin(INF), ymin(INF), zmin(INF), xmax(-INF), ymax(-INF), zmax(-INF), nxt({nullptr, nullptr}){
+
+        bool flag[3] = {0, 0, 0};
+        int finalcnt = 0, coord = -1; double finaldivide;
+        std::vector<std::pair<int, int>>  a;
+        // x coordinate order
+        a.clear();
+        for (std::vector<std::pair<int, int>>::iterator i = bg; i != ed; ++i) {
+            a.push_back(std::make_pair(polygon[*i].xmin, 1));
+            a.push_back(std::make_pair(polygon[*i].xmax, -1));
+            xmin = std::min(xmin, polygon[*i].xmin);
+            xmax = std::max(xmax, polygon[*i].xmax);
+        }
+        double dividex; int cntx;
+        split(a, cntx, dividex);
+        if (cntx > finalcnt) coord = 0, finalcnt = cntx, finaldivide = dividex;
+
+        // y coordinate order
+        a.clear();
+        for (std::vector<std::pair<int, int>>::iterator i = bg; i != ed; ++i) {
+            a.push_back(std::make_pair(polygon[*i].ymin, 1));
+            a.push_back(std::make_pair(polygon[*i].ymax, -1));
+            ymin = std::min(ymin, polygon[*i].ymin);
+            ymax = std::max(ymax, polygon[*i].ymax);
+        }
+        double dividey; int cnty;
+        split(a, cnty, dividey);
+        if (cnty > finalcnt) coord = 1, finalcnt = cnty, finaldivide = dividey;
+
+        // z coordinate order
+        a.clear();
+        for (std::vector<std::pair<int, int>>::iterator i = bg; i != ed; ++i) {
+            a.push_back(std::make_pair(polygon[*i].zmin, 1));
+            a.push_back(std::make_pair(polygon[*i].zmax, -1));
+            zmin = std::min(zmin, polygon[*i].zmin);
+            zmax = std::max(zmax, polygon[*i].zmax);
+        }
+        double dividez; int cntz;
+        split(a, cntz, dividez);
+        if (cntz > finalcnt) coord = 2, finalcnt = cntz, finaldivide = dividez;
+
+        if (!finalcnt) {
+            lkList.reArrange(bg, ed);
+            return;
+        }
+
+        flag[coord] = 1;
+        
     }
 
     double dotsProduct(const Point &a, const Point &b) {
