@@ -3,13 +3,16 @@
 
 #include <vector>
 
-const double EPS = 1E-7;
-
 namespace Equestria {
+    const double EPS = 1E-7;
+    const double INF = 1E10;
+
     class Point;
     class Ray;
     class Polygon;
     class Sphere;
+    class AdjTable;
+    class KDTree;
 
     class Point {
     public:
@@ -38,7 +41,7 @@ namespace Equestria {
         Ray(const Point &b, const Point &v);
 
         bool intersect(const Sphere &, Point *) const;
-        bool intersect(const Polygon &, Point *) const;
+        bool inkersect(const Polygon &, Point *) const;
     };
 
     class Sphere {
@@ -55,14 +58,39 @@ namespace Equestria {
     class Polygon {
     public:
         int c1, c2, c3, label, num;
-        double xy, xz, yz;
+        double xy, xz, yz, xmin, ymin, zmin, xmax, ymax, zmax;
         Point normvf;
         std::vector<Point> pList, normvList, texList;
-
 
         Polygon();
         Polygon(const std::vector<Point> &pl, const std::vector<Point> &nl,
                 const std::vector<Point> &tl, int lab);
+    };
+
+    class AdjTable {
+    public:
+        class Node{
+        public:
+            int x;
+            Node* nxt;
+
+            Node();
+            Node(int, Node*);
+        };
+        Node* head;
+
+        AdjTable();
+        void reArrange(std::vector<int>::iterator bg, std::vector<int>::iterator ed);
+    };
+
+    class KDTree {
+    public:
+        AdjTable lkList;
+        double xmin, xmax, ymin, ymax, zmin, zmax;
+        KDTree* nxt[2];
+
+        KDTree();
+        KDTree(std::vector<int>::iterator bg, std::vector<int>::iterator ed);
     };
 
     Point operator*(double, const Point &);
