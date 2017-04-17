@@ -50,11 +50,11 @@ void display()
     for (auto poly : Equestria::polygon) {
         if (poly.label >= 0) {
             auto mt = Equestria::material[poly.label].mtl;
-            GLfloat Ka[] = {(float)*mt.Ka.x, (float)*mt.Ka.y, (float)*mt.Ka.z, 1};
+            GLfloat Ka[] = {(float)mt.Ka.x, (float)mt.Ka.y, (float)mt.Ka.z, 1};
             glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, Ka);
-            GLfloat Kd[] = {(float)*mt.Kd.x, (float)*mt.Kd.y, (float)*mt.Kd.z, 1};
+            GLfloat Kd[] = {(float)mt.Kd.x, (float)mt.Kd.y, (float)mt.Kd.z, 1};
             glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, Kd);
-            GLfloat Ks[] = {(float)*mt.Ks.x, (float)*mt.Ks.y, (float)*mt.Ks.z, 1};
+            GLfloat Ks[] = {(float)mt.Ks.x, (float)mt.Ks.y, (float)mt.Ks.z, 1};
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, Ks);
             //glMaterialfv(GL_FRONT, GL_EMISSION,  sun_mat_emission);
             glMaterialf (GL_FRONT_AND_BACK, GL_SHININESS, 30.0);

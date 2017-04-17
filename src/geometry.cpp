@@ -6,54 +6,54 @@
 #include <cstring>
 
 namespace Equestria {
-    Point::Point(double tx, double ty, double tz): x(value), y(value + 1), z(value + 2) {
+    Point::Point(double tx, double ty, double tz) {
         value[0] = tx;
         value[1] = ty;
         value[2] = tz;
     }
-    Point::Point(const Point &a): x(value), y(value + 1), z(value + 2) {
+    Point::Point(const Point &a) {
         memcpy(value, a.value, sizeof(value));
     }
     Point Point::operator+(const Point &a) const {
-        return Point(*x + *a.x, *y + *a.y, *z + *a.z);
+        return Point(x + a.x, y + a.y, z + a.z);
     }
     Point &Point::operator+=(const Point &a) {
-        *x += *a.x;
-        *y += *a.y;
-        *z += *a.z;
+        x += a.x;
+        y += a.y;
+        z += a.z;
         return *this;
     }
     Point Point::operator-(const Point &a) const {
-        return Point(*x - *a.x, *y - *a.y, *z - *a.z);
+        return Point(x - a.x, y - a.y, z - a.z);
     }
     Point &Point::operator-=(const Point &a) {
-        *x -= *a.x;
-        *y -= *a.y;
-        *z -= *a.z;
+        x -= a.x;
+        y -= a.y;
+        z -= a.z;
         return *this;
     }
     Point Point::operator-() const {
-        return Point(-*x, -*y, -*z);
+        return Point(-x, -y, -z);
     }
     Point Point::operator*(double k) const {
-        return Point(k * *x, k * *y, k * *z);
+        return Point(k * x, k * y, k * z);
     }
     Point &Point::operator*=(double k) {
-        *x *= k;
-        *y *= k;
-        *z *= k;
+        x *= k;
+        y *= k;
+        z *= k;
         return *this;
     }
     Point operator*(double k, const Point &a) {
         return a * k;
     }
     Point Point::operator/(double k) const {
-        return Point(*x / k, *y / k, *z / k);
+        return Point(x / k, y / k, z / k);
     }
     Point &Point::operator/=(double k) {
-        *x /= k;
-        *y /= k;
-        *z /= k;
+        x /= k;
+        y /= k;
+        z /= k;
         return *this;
     }
     Point &Point::operator=(const Point &x)
@@ -62,7 +62,7 @@ namespace Equestria {
         return *this;
     }
     double Point::len2() const {
-        return sqr(*x) + sqr(*y) + sqr(*z);
+        return sqr(x) + sqr(y) + sqr(z);
     }
     double Point::len() const {
         return sqrt(len2());
@@ -92,7 +92,7 @@ namespace Equestria {
             head = new Node{*i, head};
     }
 
-    KDTree::KDTree(): lkList(), nxt({nullptr, nullptr}), xmin(0), ymin(0), zmin(0), xmax(0), ymax(0), zmax(0) {}
+    KDTree::KDTree(): lkList(), nxt{nullptr, nullptr}, xmin(0), ymin(0), zmin(0), xmax(0), ymax(0), zmax(0) {}
 
     Polygon::Polygon(const std::vector<Point> &pl, const std::vector<Point> &nl,
                      const std::vector<Point> &tl, int lab)
@@ -106,17 +106,17 @@ namespace Equestria {
                     if (ts > s)
                         c1 = i, c2 = j, c3 = k, s = ts;
                 }
-            xmin = std::min(xmin, *pList[i].x);
-            xmax = std::max(xmax, *pList[i].x);
-            ymin = std::min(ymin, *pList[i].y);
-            ymax = std::max(ymax, *pList[i].y);
-            zmin = std::min(zmin, *pList[i].z);
-            zmax = std::max(zmax, *pList[i].z);
+            xmin = std::min(xmin, pList[i].x);
+            xmax = std::max(xmax, pList[i].x);
+            ymin = std::min(ymin, pList[i].y);
+            ymax = std::max(ymax, pList[i].y);
+            zmin = std::min(zmin, pList[i].z);
+            zmax = std::max(zmax, pList[i].z);
         }
         Point ta = c2 - c1, tb = c3 - c1;
-        xy = *ta.x * *tb.y - *ta.y * *tb.x;
-        xz = *ta.x * *tb.z - *ta.z * *tb.x;
-        yz = *ta.y * *tb.z - *ta.z * *tb.y;
+        xy = ta.x * tb.y - ta.y * tb.x;
+        xz = ta.x * tb.z - ta.z * tb.x;
+        yz = ta.y * tb.z - ta.z * tb.y;
         normvf = Point(yz, -xz, xy);
     }
 
@@ -146,16 +146,16 @@ namespace Equestria {
 
     bool Ray::intersect(const Polygon &s, Point *p) const {
         Point ts = bgn - s.pList[s.c1];
-        double k = *vec.x * s.yz - *vec.y * s.xz + *vec.z * s.xy,
-               b = *ts.x * s.yz - *ts.y * s.xz + *ts.z * s.xy;
+        double k = vec.x * s.yz - vec.y * s.xz + vec.z * s.xy,
+               b = ts.x * s.yz - ts.y * s.xz + ts.z * s.xy;
         if (fabs(k) < EPS)
             return 0;
         double t = -b / k;
         Point ret = bgn + t * vec;
 
-        double txy = *s.normvf.x * *ret.y - *s.normvf.y * *ret.x,
-               txz = *s.normvf.x * *ret.z - *s.normvf.z * *ret.x,
-               tyz = *s.normvf.y * *ret.z - *s.normvf.z * *ret.y;
+        double txy = s.normvf.x * ret.y - s.normvf.y * ret.x,
+               txz = s.normvf.x * ret.z - s.normvf.z * ret.x,
+               tyz = s.normvf.y * ret.z - s.normvf.z * ret.y;
         for (int i = 0; i < s.num - 1; ++i)
             if (determinant(s.pList[i], s.pList[i + 1], s.normvf) +
                     (s.pList[i].x - s.pList[i + 1].x) * tyz -
@@ -224,19 +224,19 @@ namespace Equestria {
     }
 */
     double dotsProduct(const Point &a, const Point &b) {
-        return *a.x * *b.x + *a.y * *b.y + *a.z * *b.z;
+        return a.x * b.x + a.y * b.y + a.z * b.z;
     }
 
     Point crossProduct(const Point &a, const Point &b) {
-        return Point(*a.y * *b.z - *a.z * *b.y,
-                     -*a.x * *b.z + *a.z * *b.x,
-                     *a.x * *b.y - *a.y * *b.x);
+        return Point(a.y * b.z - a.z * b.y,
+                     -a.x * b.z + a.z * b.x,
+                     a.x * b.y - a.y * b.x);
     }
 
     double determinant(const Point &a, const Point &b, const Point &c) {
-        return *a.x * *b.y * *c.z - *a.x * *b.z * *c.y +
-               *a.y * *b.z * *c.x - *a.y * *b.x * *c.z +
-               *a.z * *b.x * *c.y - *a.z * *b.y * *c.x;
+        return a.x * b.y * c.z - a.x * b.z * c.y +
+               a.y * b.z * c.x - a.y * b.x * c.z +
+               a.z * b.x * c.y - a.z * b.y * c.x;
     }
 
     double calcArea(const Point &a, const Point &b, const Point &c) {

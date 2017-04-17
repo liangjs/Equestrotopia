@@ -16,9 +16,11 @@ namespace Equestria {
 
     class Point {
     public:
-        typedef double *const double_const_ptr;
-        double_const_ptr x, y, z;
+        typedef double &double_lref;
         double value[3];
+        double_lref x = value[0],
+                    y = value[1], 
+                    z = value[2];
 
         Point(double x = 0, double y = 0, double z = 0);
         Point(const Point &);
