@@ -13,9 +13,12 @@ namespace Equestria {
 
     class Point {
     public:
-        double x, y, z;
+        typedef double *const double_const_ptr;
+        double_const_ptr x, y, z;
+        double value[3];
 
-        Point(int x = 0, int y = 0, int z = 0);
+        Point(double x = 0, double y = 0, double z = 0);
+        Point(const Point &);
         Point operator+(const Point &) const;
         Point &operator+=(const Point &);
         Point operator-(const Point &) const;
@@ -25,6 +28,7 @@ namespace Equestria {
         Point &operator*=(double);
         Point operator/(double) const;
         Point &operator/=(double);
+        Point &operator=(const Point &x);
 
         double len() const;
         double len2() const;
@@ -53,12 +57,16 @@ namespace Equestria {
     };
 
     class Polygon {
-    public:
-        int c1, c2, c3, label, num;
+    private:
         double xy, xz, yz;
+    public:
+        int c1, c2, c3; //
+        int label; // material index
+        int num; // number of points
         Point normvf;
         std::vector<Point> pList, normvList, texList;
 
+        friend class Ray;
 
         Polygon();
         Polygon(const std::vector<Point> &pl, const std::vector<Point> &nl,

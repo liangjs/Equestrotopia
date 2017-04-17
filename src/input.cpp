@@ -58,6 +58,7 @@ namespace Equestria {
     }
 
     void objRead(const std::string &file) {
+        std::cout << "Loading " << file << " ..." << std::endl;
         std::ifstream fin(file);
         std::string line;
         std::vector<Point> vlist, vnlist, vtlist;
@@ -71,7 +72,7 @@ namespace Equestria {
             if (split.empty())
                 continue;
             std::string op = split.front();
-            if (op == "#") // comment
+            if (op[0] == '#') // comment
                 ;
             else if (op == "v") // vertex
                 vlist.push_back(__getObjPoint(++split.begin(), split.end()));
@@ -110,19 +111,24 @@ namespace Equestria {
             }
             else if (op == "usemtl") // use material
                 material = mtlIndex[split.back()];
+            else if (op == "g" || op == "o" || op == "s")
+                ;//std::cout << "ignore operator \"" << op << "\"" << std::endl;
             else
-                std::cerr << file << ": operation \"" << op << "\"not supported" << std::endl;
+                std::cerr << "operator \"" << op << "\" not supported" << std::endl;
         }
         fin.close();
     }
 
     void mtlRead(const std::string &file) {
+        std::cout << "Loading " << file << " ..." << std::endl;
         std::ifstream fin(file);
         std::string line;
         Material *pm = NULL;
         while (getline(fin, line)) {
             std::vector<std::string> split;
             strSplit(line, split);
+            if (split.empty())
+                continue;
             std::string op = split.front();
             if (op == "newmtl") {
                 int num = mtlIndex.size();
@@ -130,7 +136,7 @@ namespace Equestria {
                 material.push_back(Material());
                 pm = &material.back();
             }
-            else if (op == "#") // comment
+            else if (op[0] == '#') // comment
                 ;
             else if (op == "Ka")
                 pm->mtl.Ka = __getObjPoint(++split.begin(), split.end());
@@ -142,6 +148,8 @@ namespace Equestria {
                 pm->mtl.Tf = __getObjPoint(++split.begin(), split.end());
             else if (op == "Ns")
                 pm->mtl.Ns = atof(split.back().c_str());
+            else if (op == "Ni")
+                pm->mtl.Ni = atof(split.back().c_str());
             else if (op == "d")
                 pm->mtl.Tr = 1 - atof(split.back().c_str());
             else if (op == "Tr")
@@ -150,12 +158,14 @@ namespace Equestria {
                 pm->mtl.illum = atoi(split.back().c_str());
             else if (op == "map_Ka")
                 pm->mtl.mapKa = split.back();
+            else if (op == "map_Kd")
+                pm->mtl.mapKd = split.back();
             else if (op == "map_Ks")
                 pm->mtl.mapKs = split.back();
             else if (op == "map_bump" || op == "bump")
                 pm->mtl.mapBump = split.back();
             else
-                std::cerr << file << ": operation \"" << op << "\"not supported" << std::endl;
+                std::cerr << "operator \"" << op << "\" not supported" << std::endl;
         }
     }
 }
