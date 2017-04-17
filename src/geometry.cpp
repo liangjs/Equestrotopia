@@ -6,7 +6,6 @@
 #include <cstring>
 
 namespace Equestria {
-
     Point::Point(double tx, double ty, double tz): x(value), y(value + 1), z(value + 2) {
         value[0] = tx;
         value[1] = ty;
@@ -107,12 +106,12 @@ namespace Equestria {
                     if (ts > s)
                         c1 = i, c2 = j, c3 = k, s = ts;
                 }
-            xmin = std::min(xmin, pList[i].x);
-            xmax = std::max(xmax, pList[i].x);
-            ymin = std::min(ymin, pList[i].y);
-            ymax = std::max(ymax, pList[i].y);
-            zmin = std::min(zmin, pList[i].z);
-            zmax = std::max(zmax, pList[i].z);
+            xmin = std::min(xmin, *pList[i].x);
+            xmax = std::max(xmax, *pList[i].x);
+            ymin = std::min(ymin, *pList[i].y);
+            ymax = std::max(ymax, *pList[i].y);
+            zmin = std::min(zmin, *pList[i].z);
+            zmax = std::max(zmax, *pList[i].z);
         }
         Point ta = c2 - c1, tb = c3 - c1;
         xy = *ta.x * *tb.y - *ta.y * *tb.x;
@@ -172,7 +171,7 @@ namespace Equestria {
         *p = ret;
         return 1;
     }
-
+/*
     KDTree::KDTree(std::vector<int>::iterator bg, std::vector<int>::iterator ed)
             : lkList(), xmin(INF), ymin(INF), zmin(INF), xmax(-INF), ymax(-INF), zmax(-INF), nxt({nullptr, nullptr}){
 
@@ -223,7 +222,7 @@ namespace Equestria {
         flag[coord] = 1;
         
     }
-
+*/
     double dotsProduct(const Point &a, const Point &b) {
         return *a.x * *b.x + *a.y * *b.y + *a.z * *b.z;
     }

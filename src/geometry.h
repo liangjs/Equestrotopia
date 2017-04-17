@@ -45,7 +45,7 @@ namespace Equestria {
         Ray(const Point &b, const Point &v);
 
         bool intersect(const Sphere &, Point *) const;
-        bool inkersect(const Polygon &, Point *) const;
+        bool intersect(const Polygon &, Point *) const;
     };
 
     class Sphere {
