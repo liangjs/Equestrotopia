@@ -73,7 +73,7 @@ namespace Equestria
 
         double bdmin[3], bdmax[3];
         double_ref xmin = bdmin[0], ymin = bdmin[1], zmin = bdmin[2], xmax = bdmax[0], ymax = bdmax[1], zmax = bdmax[2];
-        int c1, c2, c3; //
+        int c1, c2, c3; // c1,c2,c3 consist of triangle in polygon with maximum area
         int label; // material index
         int num; // number of points
         Point normvf;
