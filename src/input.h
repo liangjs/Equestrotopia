@@ -6,7 +6,8 @@
 #include <string>
 #include "geometry.h"
 
-namespace Equestria {
+namespace Equestria
+{
     extern std::vector<Polygon> polygon;
     extern std::map<std::string, int> mtlIndex;
 

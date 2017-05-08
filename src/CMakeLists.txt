@@ -1,6 +1,6 @@
-add_compile_options(-std=c++11)
+set(CMAKE_CXX_STANDARD 11)
 find_package(OpenGL REQUIRED)
 find_package(GLUT REQUIRED)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-ADD_EXECUTABLE(Equestrotopia main.cpp input.cpp geometry.cpp brdf.cpp)
+ADD_EXECUTABLE(Equestrotopia main.cpp input.cpp geometry.cpp brdf.cpp kdtree.cpp)
 target_link_libraries(Equestrotopia ${OPENGL_LIBRARY} ${GLUT_LIBRARIES})

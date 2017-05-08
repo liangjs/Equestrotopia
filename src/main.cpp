@@ -1,10 +1,12 @@
 #include <GL/glut.h>
-#include "main.h"
 #include <unistd.h>
 #include <string>
 #include <iostream>
 #include <algorithm>
 #include <cmath>
+
+#include "main.h"
+#include "kdtree.h"
 
 void display()
 {
@@ -98,6 +100,9 @@ void initialize(const std::string &path)
     chdir("data");
     Equestria::readModel("list.txt");
     chdir("..");
+
+    using namespace Equestria;
+    polyKDTree *p = new polyKDTree(polygon.begin(), polygon.end());
 }
 
 int main(int argc, char *argv[])
