@@ -3,6 +3,8 @@
 #include <numeric>
 #include <algorithm>
 
+//#include <iostream>
+
 namespace Equestria
 {
     polyKDTree::polyKDTree(vpit_t _begin, vpit_t _end): begin(_begin), end(_end)
@@ -31,11 +33,11 @@ namespace Equestria
                     rbegin = _rbegin;
                 }
             }
-            if (lend == v[besti].begin() || rbegin == v[besti].end())
+            if (bestval == end - begin)
                 son[0] = son[1] = NULL;
             else {
-                for (vpit_t i = begin, j = v[besti].begin(); i != end; ++i, ++j)
-                    *i = *j;
+                std::copy(v[besti].begin(), v[besti].end(), begin);
+                //std::cout << lend - v[besti].begin() << " + " << v[besti].end() - rbegin << " ~= " << end - begin << std::endl;
                 son[0] = new polyKDTree(begin, begin + (lend - v[besti].begin()));
                 son[1] = new polyKDTree(end - (v[besti].end() - rbegin), end);
             }
@@ -55,20 +57,17 @@ namespace Equestria
         int vsize = end - begin;
         std::vector<double> vmin(vsize), vmax(vsize), vall(vsize * 2);
         std::transform(begin, end, vmin.begin(), [ = ](const Polygon & p) {return p.bdmin[splitter];});
-        std::transform(begin, end, vmin.begin(), [ = ](const Polygon & p) {return p.bdmax[splitter];});
+        std::transform(begin, end, vmax.begin(), [ = ](const Polygon & p) {return p.bdmax[splitter];});
         std::sort(vmin.begin(), vmin.end());
         std::sort(vmax.begin(), vmax.end());
         std::merge(vmin.begin(), vmin.end(), vmax.begin(), vmax.end(), vall.begin());
         std::vector<double>::iterator itmin = vmin.begin(), itmax = vmax.begin();
-        int num_min = 0, num_max = vsize;
         int ans = vsize;
         double pos = vall.front();
         for (auto t : vall) {
-            while (itmin + 1 != vmin.end() && *(itmin + 1) < t)
-                ++itmin, --num_max;
-            while (itmax != vmax.end() && *itmax <= t)
-                ++itmax, ++num_min;
-            int ans_now = std::max(num_min, num_max);
+            int num_min = std::upper_bound(vmax.begin(), vmax.end(), t) - vmax.begin();
+            int num_max = vmin.end() - std::lower_bound(vmin.begin(), vmin.end(), t);
+            int ans_now = vsize - std::min(num_min, num_max);
             if (ans_now < ans) {
                 ans = ans_now;
                 pos = t;
@@ -76,9 +75,9 @@ namespace Equestria
         }
         auto ord = [ = ](const Polygon & p) {return p.bdmax[splitter] <= pos ? -1 : (p.bdmin[splitter] >= pos ? 1 : 0);};
         std::sort(begin, end, [ & ](const Polygon & p1, const Polygon & p2) {return ord(p1) < ord(p2);});
-        for (lend = begin; lend != end && ord(*lend) < 0;)
+        for (lend = begin; lend != end && ord(*lend) <= 0;)
             ++lend;
-        for (rbegin = begin; rbegin != end && ord(*rbegin) <= 0;)
+        for (rbegin = begin; rbegin != end && ord(*rbegin) < 0;)
             ++rbegin;
         return ans;
     }

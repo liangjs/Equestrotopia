@@ -90,10 +90,12 @@ namespace Equestria
     Sphere::Sphere(const Point &a, double r): center(a), radius(r) {}
     Sphere::Sphere(double ox, double oy, double oz, double r): center(ox, oy, oz), radius(r) {}
 
-    Polygon::Polygon(const Polygon &p): num(p.num), label(p.label)
+    Polygon::Polygon(const Polygon &p): num(p.num), label(p.label), normvf(p.normvf), pList(p.pList), normvList(p.normvList), texList(p.texList)
     {
         memcpy(bdmin, p.bdmin, sizeof(bdmin));
         memcpy(bdmax, p.bdmax, sizeof(bdmax));
+        c1 = p.c1, c2 = p.c2, c3 = p.c3;
+        xy = p.xy, xz = p.xz, yz = p.yz;
     }
 
     Polygon &Polygon::operator= (const Polygon &p)
@@ -101,6 +103,10 @@ namespace Equestria
         num = p.num, label = p.label;
         memcpy(bdmin, p.bdmin, sizeof(bdmin));
         memcpy(bdmax, p.bdmax, sizeof(bdmax));
+        c1 = p.c1, c2 = p.c2, c3 = p.c3;
+        normvf = p.normvf;
+        xy = p.xy, xz = p.xz, yz = p.yz;
+        pList = p.pList, normvList = p.normvList, texList = p.texList;
         return *this;
     }
 

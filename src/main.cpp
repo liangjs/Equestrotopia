@@ -59,7 +59,7 @@ void display()
             GLfloat Ks[] = {(float)mt.Ks.x, (float)mt.Ks.y, (float)mt.Ks.z, 1};
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, Ks);
             //glMaterialfv(GL_FRONT, GL_EMISSION,  sun_mat_emission);
-            glMaterialf (GL_FRONT_AND_BACK, GL_SHININESS, 30.0);
+            glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 30.0);
         }
         glBegin(GL_POLYGON);
         for (int i = 0; i < poly.num; ++i) {
@@ -100,9 +100,6 @@ void initialize(const std::string &path)
     chdir("data");
     Equestria::readModel("list.txt");
     chdir("..");
-
-    using namespace Equestria;
-    polyKDTree *p = new polyKDTree(polygon.begin(), polygon.end());
 }
 
 int main(int argc, char *argv[])
