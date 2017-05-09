@@ -6,7 +6,8 @@
 #include <string>
 #include "geometry.h"
 
-namespace Equestria {
+namespace Equestria
+{
     extern std::vector<Polygon> polygon;
     extern std::map<std::string, int> mtlIndex;
 
@@ -18,7 +19,7 @@ namespace Equestria {
             Point Ks; // specular
             Point Tf; // transmission filter
             double Ns; // specular exponent, range between 0 and 1000
-            double Ni; // refraction index, range from 0.001 to 10
+            double Ni; // refractive index, range from 0.001 to 10
             double Tr; // Tr for transparent, 0 <= Tr <= 1
             int illum; /* 0. Color on and Ambient off
                           1. Color on and Ambient on
@@ -32,10 +33,10 @@ namespace Equestria {
                           9. Transparency: Glass on, Reflection: Ray trace off
                           10. Casts shadows onto invisible surfaces */
             std::string mapKa; // ambient texture map
-            //std::string mapKd; // diffuse texture map, most of time be the same as mapKa
+            std::string mapKd; // diffuse texture map, most of time be the same as mapKa
             std::string mapKs; // specular color texture map
             std::string mapBump; // bump map (which by default uses luminance channel of the image)
-            MTL(): Tr(0) {}
+            MTL(): Tr(0), Ni(1) {}
         } mtl;
         Material(): brdf(NULL) {}
     };
