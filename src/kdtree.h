@@ -17,6 +17,8 @@ namespace Equestria
 
         polyKDTree(vpit_t begin, vpit_t end);
         ~polyKDTree();
+        //void draw(double Mx);
+        double intersect(const Ray &ray, Point *p)const; /* return INF if no intersection */
 
         static int split(vpit_t begin, vpit_t end, vpit_t &lend, vpit_t &rbegin, int splitter);
     };

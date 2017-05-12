@@ -8,6 +8,8 @@
 #include "main.h"
 #include "kdtree.h"
 
+Equestria::polyKDTree *ptree;
+
 void display()
 {
     glClearColor(0, 0, 0, 0);
@@ -68,6 +70,7 @@ void display()
         }
         glEnd();
     }
+
     glFlush();
     glutSwapBuffers();
 }
@@ -100,6 +103,9 @@ void initialize(const std::string &path)
     chdir("data");
     Equestria::readModel("list.txt");
     chdir("..");
+
+    //ptree = new Equestria::polyKDTree(Equestria::polygon.begin(), Equestria::polygon.end());
+    //exit(0);
 }
 
 int main(int argc, char *argv[])
