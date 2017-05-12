@@ -1,9 +1,10 @@
 #include "kdtree.h"
+#include <cmath>
 #include <cstring>
 #include <numeric>
 #include <algorithm>
 
-//#include <iostream>
+//#include <GL/glut.h>
 
 namespace Equestria
 {
@@ -37,7 +38,6 @@ namespace Equestria
                 son[0] = son[1] = NULL;
             else {
                 std::copy(v[besti].begin(), v[besti].end(), begin);
-                //std::cout << lend - v[besti].begin() << " + " << v[besti].end() - rbegin << " ~= " << end - begin << std::endl;
                 son[0] = new polyKDTree(begin, begin + (lend - v[besti].begin()));
                 son[1] = new polyKDTree(end - (v[besti].end() - rbegin), end);
             }
@@ -81,5 +81,75 @@ namespace Equestria
             ++rbegin;
         return ans;
     }
-
+    /*
+        void polyKDTree::draw(double Mx)
+        {
+            glBegin(GL_LINE_LOOP);
+            glVertex3d(bdmin[0]/Mx, bdmin[1]/Mx, bdmin[2]/Mx);
+            glVertex3d(bdmin[0]/Mx, bdmin[1]/Mx, bdmax[2]/Mx);
+            glVertex3d(bdmin[0]/Mx, bdmax[1]/Mx, bdmax[2]/Mx);
+            glVertex3d(bdmin[0]/Mx, bdmax[1]/Mx, bdmin[2]/Mx);
+            glEnd();
+            glBegin(GL_LINE_LOOP);
+            glVertex3d(bdmax[0]/Mx, bdmin[1]/Mx, bdmin[2]/Mx);
+            glVertex3d(bdmax[0]/Mx, bdmin[1]/Mx, bdmax[2]/Mx);
+            glVertex3d(bdmax[0]/Mx, bdmax[1]/Mx, bdmax[2]/Mx);
+            glVertex3d(bdmax[0]/Mx, bdmax[1]/Mx, bdmin[2]/Mx);
+            glEnd();
+            glBegin(GL_LINES);
+            glVertex3d(bdmin[0]/Mx, bdmin[1]/Mx, bdmin[2]/Mx);
+            glVertex3d(bdmax[0]/Mx, bdmin[1]/Mx, bdmin[2]/Mx);
+            glVertex3d(bdmin[0]/Mx, bdmin[1]/Mx, bdmax[2]/Mx);
+            glVertex3d(bdmax[0]/Mx, bdmin[1]/Mx, bdmax[2]/Mx);
+            glVertex3d(bdmin[0]/Mx, bdmax[1]/Mx, bdmax[2]/Mx);
+            glVertex3d(bdmax[0]/Mx, bdmax[1]/Mx, bdmax[2]/Mx);
+            glVertex3d(bdmin[0]/Mx, bdmax[1]/Mx, bdmin[2]/Mx);
+            glVertex3d(bdmax[0]/Mx, bdmax[1]/Mx, bdmin[2]/Mx);
+            glEnd();
+            if (son[0])
+                son[0]->draw(Mx);
+            if (son[1])
+                son[1]->draw(Mx);
+        }
+    */
+    double polyKDTree::intersect(const Ray &ray, Point *p)const
+    {
+        double l = 0, r = INF;
+        for (int i = 0; i < 3; ++i) {
+            const double &di = ray.vec.value[i];
+            const double &bi = ray.bgn.value[i];
+            const double &mn = bdmin[i], &mx = bdmax[i];
+            if (fabs(di) < EPS) {
+                if (bi + EPS < mn || bi - EPS > mx)
+                    return INF;
+            }
+            else {
+                double l2 = (mn - bi) / di, r2 = (mx - bi) / di;
+                if (l2 < r2)
+                    l = std::max(l, l2), r = std::min(r, r2);
+                else
+                    l = std::max(l, r2), r = std::min(r, l2);
+                if (l + EPS >= r)
+                    return INF;
+            }
+        }
+        if (son[0]) /* have 2 sons */ {
+            double t = son[0]->intersect(ray, p);
+            if (t != INF)
+                return t;
+            return son[1]->intersect(ray, p);
+        }
+        else {
+            double ans = INF;
+            for (vpit_t i = begin; i != end; ++i) {
+                Point tmp;
+                double t = ray.intersect(*i, &tmp);
+                if (t < ans) {
+                    ans = t;
+                    *p = tmp;
+                }
+            }
+            return ans;
+        }
+    }
 }

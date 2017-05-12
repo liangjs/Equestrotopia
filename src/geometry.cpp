@@ -138,21 +138,21 @@ namespace Equestria
         normvf = Point(yz, -xz, xy);
     }
 
-    bool Ray::intersect(const Sphere &s, Point *p) const
+    double Ray::intersect(const Sphere &s, Point *p) const
     {
         Point t = bgn - s.center;
         double b = 2 * dotsProduct(t, vec),
                c = t.len2() - sqr(s.radius),
                delta = sqr(b) - 4 * c;
         if (delta < EPS)
-            return 0;
+            return INF;
         delta = sqrt(delta);
         double t1 = (-b - delta) / 2,
                t2 = (-b + delta) / 2,
                res;
         if (t1 < EPS)
             if (t2 < EPS)
-                return 0;
+                return INF;
             else
                 res = t2;
         else if (t2 < EPS)
@@ -160,16 +160,16 @@ namespace Equestria
         else
             res = std::min(t1, t2);
         *p = bgn + res * vec;
-        return 1;
+        return res;
     }
 
-    bool Ray::intersect(const Polygon &s, Point *p) const
+    double Ray::intersect(const Polygon &s, Point *p) const
     {
         Point ts = bgn - s.pList[s.c1];
         double k = vec.x * s.yz - vec.y * s.xz + vec.z * s.xy,
                b = ts.x * s.yz - ts.y * s.xz + ts.z * s.xy;
         if (fabs(k) < EPS)
-            return 0;
+            return INF;
         double t = -b / k;
         Point ret = bgn + t * vec;
 
@@ -181,15 +181,15 @@ namespace Equestria
                 (s.pList[i].x - s.pList[i + 1].x) * tyz -
                 (s.pList[i].y - s.pList[i + 1].y) * txz +
                 (s.pList[i].z - s.pList[i + 1].z) * txy < -EPS)
-                return 0;
+                return INF;
         if (determinant(s.pList[s.num - 1], s.pList[1], s.normvf) +
             (s.pList[s.num - 1].x - s.pList[1].x) * tyz -
             (s.pList[s.num - 1].y - s.pList[1].y) * txz +
             (s.pList[s.num - 1].z - s.pList[1].z) * txy < -EPS)
-            return 0;
+            return INF;
 
         *p = ret;
-        return 1;
+        return t;
     }
 
     double dotsProduct(const Point &a, const Point &b)

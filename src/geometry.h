@@ -50,8 +50,8 @@ namespace Equestria
         Ray();
         Ray(const Point &b, const Point &v);
 
-        bool intersect(const Sphere &, Point *) const;
-        bool intersect(const Polygon &, Point *) const;
+        double intersect(const Sphere &, Point *) const;
+        double intersect(const Polygon &, Point *) const;
     };
 
     class Sphere
