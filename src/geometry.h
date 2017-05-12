@@ -13,6 +13,7 @@ namespace Equestria
     class Polygon;
     class Sphere;
     class Photon;
+    struct Hitpoint;
 
     typedef double &double_ref;
 
@@ -102,6 +103,19 @@ namespace Equestria
     template<class T> T sqr(const T &x)
     {
         return x * x;
+    };
+
+    struct Hitpoint
+    {
+        Point position;
+        Point normv;
+        Point raydir;
+        int material;
+        double x, y; // Pixel location
+        Point wgt; // Pixel weight
+        double radius;
+        int ptncount;  // Accumulated photon count
+        Point tau; // Accumulated reflected flux
     };
 }
 
