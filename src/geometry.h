@@ -12,8 +12,6 @@ namespace Equestria
     class Ray;
     class Polygon;
     class Sphere;
-    class AdjTable;
-    class KDTree;
 
     typedef double &double_ref;
 
