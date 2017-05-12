@@ -152,4 +152,29 @@ namespace Equestria
             return ans;
         }
     }
+
+    ptnKDTree::ptnKDTree(int order, std::vector<Photon*>::iterator bgn, std::vector<Photon*>::iterator ed):
+        bdmin{INF, INF, INF}, bdmax{-INF, -INF, -INF}, son{NULL, NULL}
+    {
+        std::sort(bgn, ed, 
+                [order](Photon *a, Photon *b)->bool{return a->light.bgn.value[order] < b->light.bgn.value[order];});
+        for (std::vector<Photon*>::iterator i = bgn; i != ed; ++i)
+        {
+            bdmin[0] = std::min(bdmin[0], (*i)->light.bgn.value[0]);
+            bdmin[1] = std::min(bdmin[1], (*i)->light.bgn.value[1]);
+            bdmin[2] = std::min(bdmin[2], (*i)->light.bgn.value[2]);
+            bdmax[0] = std::max(bdmax[0], (*i)->light.bgn.value[0]);
+            bdmax[1] = std::max(bdmax[1], (*i)->light.bgn.value[1]);
+            bdmax[2] = std::max(bdmax[2], (*i)->light.bgn.value[2]);
+        }
+
+    }
+
+    ptnKDTree::~ptnKDTree()
+    {
+        if (son[0])
+            delete son[0];
+        if (son[1])
+            delete son[1];
+    }
 }

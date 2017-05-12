@@ -12,6 +12,7 @@ namespace Equestria
     class Ray;
     class Polygon;
     class Sphere;
+    class Photon;
 
     typedef double &double_ref;
 
@@ -50,6 +51,15 @@ namespace Equestria
 
         double intersect(const Sphere &, Point *) const;
         double intersect(const Polygon &, Point *) const;
+    };
+
+    class Photon
+    {
+    public:
+        Ray light;
+        Point rgb;
+
+        Photon(const Ray& ray, const Point& clr);
     };
 
     class Sphere
