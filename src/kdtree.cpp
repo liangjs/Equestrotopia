@@ -8,11 +8,11 @@
 
 namespace Equestria
 {
-    polyKDTree::polyKDTree(vpit_t _begin, vpit_t _end): begin(_begin), end(_end)
+    polyKDTree::polyKDTree(vpolyit _begin, vpolyit _end): begin(_begin), end(_end)
     {
         for (int i = 0; i < 3; ++i)
             bdmin[i] = INF, bdmax[i] = -INF;
-        for (vpit_t i = begin; i != end; ++i)
+        for (vpolyit i = begin; i != end; ++i)
             for (int j = 0; j < 3; ++j) {
                 bdmin[j] = std::min(bdmin[j], i->bdmin[j]);
                 bdmax[j] = std::max(bdmax[j], i->bdmax[j]);
@@ -22,10 +22,10 @@ namespace Equestria
         else {
             std::vector<Polygon> v[3];
             int besti, bestval = end - begin;
-            vpit_t lend, rbegin;
+            vpolyit lend, rbegin;
             for (int i = 0; i < 3; ++i) {
                 v[i].assign(begin, end);
-                vpit_t _lend, _rbegin;
+                vpolyit _lend, _rbegin;
                 int val = split(v[i].begin(), v[i].end(), _lend, _rbegin, i);
                 if (val < bestval) {
                     besti = i;
@@ -52,7 +52,7 @@ namespace Equestria
             delete son[1];
     }
 
-    int polyKDTree::split(vpit_t begin, vpit_t end, vpit_t &lend, vpit_t &rbegin, int splitter)
+    int polyKDTree::split(vpolyit begin, vpolyit end, vpolyit &lend, vpolyit &rbegin, int splitter)
     {
         int vsize = end - begin;
         std::vector<double> vmin(vsize), vmax(vsize), vall(vsize * 2);
@@ -141,7 +141,7 @@ namespace Equestria
         }
         else {
             double ans = INF;
-            for (vpit_t i = begin; i != end; ++i) {
+            for (vpolyit i = begin; i != end; ++i) {
                 Point tmp;
                 double t = ray.intersect(*i, &tmp);
                 if (t < ans) {
@@ -153,20 +153,32 @@ namespace Equestria
         }
     }
 
-    ptnKDTree::ptnKDTree(int order, std::vector<Photon*>::iterator bgn, std::vector<Photon*>::iterator ed):
-        bdmin{INF, INF, INF}, bdmax{-INF, -INF, -INF}, son{NULL, NULL}
+    ptnKDTree::ptnKDTree(vptnit bgn, vptnit ed, int order):
+        bdmin{INF, INF, INF}, bdmax{-INF, -INF, -INF}, son{NULL, NULL}, begin(bgn), end(ed)
     {
+        for (vptnit i = bgn; i != ed; ++i)
+            for (int j = 0; j < 3; ++j)
+            {
+            bdmin[j] = std::min(bdmin[j], (*i)->light.bgn.value[j]);
+            bdmax[j] = std::max(bdmax[j], (*i)->light.bgn.value[j]);
+            }
+        int v = order;
+        if (bdmin[v] == bdmax[v]) (v += 1) %= 3;
+        if (bdmin[v] == bdmax[v]) (v += 1) %= 3;
+        if (bdmin[v] == bdmax[v]) return;
         std::sort(bgn, ed, 
-                [order](Photon *a, Photon *b)->bool{return a->light.bgn.value[order] < b->light.bgn.value[order];});
-        for (std::vector<Photon*>::iterator i = bgn; i != ed; ++i)
-        {
-            bdmin[0] = std::min(bdmin[0], (*i)->light.bgn.value[0]);
-            bdmin[1] = std::min(bdmin[1], (*i)->light.bgn.value[1]);
-            bdmin[2] = std::min(bdmin[2], (*i)->light.bgn.value[2]);
-            bdmax[0] = std::max(bdmax[0], (*i)->light.bgn.value[0]);
-            bdmax[1] = std::max(bdmax[1], (*i)->light.bgn.value[1]);
-            bdmax[2] = std::max(bdmax[2], (*i)->light.bgn.value[2]);
-        }
+                [v](Photon *a, Photon *b)->bool{return a->light.bgn.value[v] < b->light.bgn.value[v];});
+        vptnit split = bgn;
+        int maxsplit = 0;
+        for (vptnit i = bgn + 1; i != ed; ++i)
+            if (((*i)->light.bgn.value[v] != (*(i-1))->light.bgn.value[v]) &&
+                (maxsplit < abs((ed - i) + (i - bgn))))
+            {
+                maxsplit = abs((ed - i) + (i - bgn));
+                split = i;
+            }
+        son[0] = new ptnKDTree(bgn, split, (v + 1) % 3);
+        son[1] = new ptnKDTree(split, ed, (v + 1) % 3);
 
     }
 
@@ -176,5 +188,10 @@ namespace Equestria
             delete son[0];
         if (son[1])
             delete son[1];
+    }
+
+    void ptnKDTree::find(const Hitpoint &hp, std::vector<Photon*> &lst)
+    {
+
     }
 }

@@ -12,15 +12,15 @@ namespace Equestria
         double bdmin[3], bdmax[3]; // bounding box
         polyKDTree *son[2];
 
-        typedef std::vector<Polygon>::iterator vpit_t;
-        vpit_t begin, end;
+        typedef std::vector<Polygon>::iterator vpolyit;
+        vpolyit begin, end;
 
-        polyKDTree(vpit_t begin, vpit_t end);
+        polyKDTree(vpolyit begin, vpolyit end);
         ~polyKDTree();
         //void draw(double Mx);
         double intersect(const Ray &ray, Point *p)const; /* return INF if no intersection */
 
-        static int split(vpit_t begin, vpit_t end, vpit_t &lend, vpit_t &rbegin, int splitter);
+        static int split(vpolyit begin, vpolyit end, vpolyit &lend, vpolyit &rbegin, int splitter);
     };
 
     class ptnKDTree
@@ -30,8 +30,12 @@ namespace Equestria
         double bdmin[3], bdmax[3]; // bounding box
         ptnKDTree *son[2];
 
-        ptnKDTree(int order, std::vector<Photon*>::iterator bgn, std::vector<Photon*>::iterator ed);
+        typedef std::vector<Photon*>::iterator vptnit;
+        vptnit begin, end;
+
+        ptnKDTree(vptnit bgn, vptnit ed, int order = 0);
         ~ptnKDTree();
+        void find(const Hitpoint &hp, std::vector<Photon*> &lst);
     };
 
 }
