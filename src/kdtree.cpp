@@ -192,6 +192,26 @@ namespace Equestria
 
     void ptnKDTree::find(const Hitpoint &hp, std::vector<Photon*> &lst)
     {
+        double dx = std::max(abs(bdmin[0] - hp.position.x), abs(bdmax[0] - hp.position.x)),
+               dy = std::max(abs(bdmin[1] - hp.position.y), abs(bdmax[1] - hp.position.y)),
+               dz = std::max(abs(bdmin[2] - hp.position.z), abs(bdmax[2] - hp.position.z));
+        double maxdist = sqr(dx) + sqr(dy) + sqr(dz);
+        if (maxdist < hp.radius + EPS)
+        {
+            for (vptnit i = begin; i != end; ++i)
+                lst.push_back(*i);
+            return;
+        }
 
+        double mindist = 0;
+        for (int i = 0; i < 3; ++i)
+            if (hp.position.value[i] > bdmax[i] + EPS)
+                mindist += sqr(hp.position.value[i] - bdmax[i]);
+            else if (hp.position.value[i] < bdmin[i] - EPS)
+                mindist += sqr(hp.position.value[i] - bdmin[i]);
+
+        if (mindist > hp.radius + EPS) return;
+        if (son[0]) son[0]->find(hp, lst);
+        if (son[1]) son[1]->find(hp, lst); 
     }
 }

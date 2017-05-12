@@ -38,6 +38,7 @@ namespace Equestria
         void find(const Hitpoint &hp, std::vector<Photon*> &lst);
     };
 
+    template<class T> T sqr(const T&x);
 }
 
 #endif
