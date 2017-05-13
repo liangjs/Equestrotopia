@@ -172,33 +172,38 @@ namespace Equestria
         }
         else
             goto calculate;
-        double tx = bx + t * dx, ty = by + t * dy, tz = bz + t * dz;
-        if (tx < mnx - EPS || tx > mxx + EPS || ty < mny - EPS || ty > mxy + EPS || tz < mnz - EPS || tz > mxz + EPS)
-            return INF;
+        {
+            double tx = bx + t * dx, ty = by + t * dy, tz = bz + t * dz;
+            if (tx < mnx - EPS || tx > mxx + EPS || ty < mny - EPS || ty > mxy + EPS || tz < mnz - EPS || tz > mxz + EPS)
+                return INF;
+        }
 calculate:
         if (son[0]) { /* have 2 sons */
             int k = dcmp(ray.bgn.value[split_dir], split_pos);
-            if (k == 0) // ray.bgn.value[split_dir] == split_pos
+            if (k == 0) { // ray.bgn.value[split_dir] == split_pos
                 k = dcmp(ray.vec.value[split_dir]);
-            if (k) {
+                if (k)
+                    return son[(k + 1) / 2]->intersect(ray, p);
+                else {
+                    Point p0, p1;
+                    double t0 = son[0]->intersect(ray, &p0);
+                    double t1 = son[1]->intersect(ray, &p1);
+                    if (t0 < t1) {
+                        *p = p0;
+                        return t0;
+                    }
+                    else {
+                        *p = p1;
+                        return t1;
+                    }
+                }
+            }
+            else {
                 k = (k + 1) / 2; // -1 -> 0   1 -> 1
                 double t = son[k]->intersect(ray, p);
                 if (t != INF)
                     return t;
                 return son[k ^ 1]->intersect(ray, p);
-            }
-            else {
-                Point p0, p1;
-                double t0 = son[0]->intersect(ray, &p0);
-                double t1 = son[1]->intersect(ray, &p1);
-                if (t0 < t1) {
-                    *p = p0;
-                    return t0;
-                }
-                else {
-                    *p = p1;
-                    return t1;
-                }
             }
         }
         else {
