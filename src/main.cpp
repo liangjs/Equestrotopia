@@ -9,7 +9,7 @@
 
 using namespace Equestria;
 using namespace std;
-polyKDTree *ptree;
+polyKDTree *polytree;
 
 void readInput(const string &path)
 {
@@ -28,7 +28,7 @@ void build_polyKDTree()
 {
     cout << "building polygon kd-tree ..." << endl;
 
-    ptree = new polyKDTree(polygon.begin(), polygon.end());
+    polytree = new polyKDTree(polygon.begin(), polygon.end());
 }
 
 int main(int argc, char *argv[])

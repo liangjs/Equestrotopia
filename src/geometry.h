@@ -10,9 +10,10 @@ namespace Equestria
     const double INF = 1E10;
 
     class Point;
-    class Ray;
     class Polygon;
     class Sphere;
+    class Ray;
+    class polyKDTree;
 
     typedef double &double_ref;
 
@@ -39,18 +40,6 @@ namespace Equestria
 
         double len() const;
         double len2() const;
-    };
-
-    class Ray
-    {
-    public:
-        Point bgn, vec;
-
-        Ray();
-        Ray(const Point &b, const Point &v);
-
-        double intersect(const Sphere &, Point *) const;
-        double intersect(const Polygon &, Point *) const;
     };
 
     class Sphere
@@ -90,7 +79,7 @@ namespace Equestria
     Point crossProduct(const Point &, const Point &);
     double determinant(const Point &, const Point &, const Point &);
     double calcArea(const Point &, const Point &, const Point &);
-    template<class T> T sqr(const T &x)
+    template<class T> inline T sqr(const T &x)
     {
         return x * x;
     };
@@ -99,6 +88,10 @@ namespace Equestria
         return fabs(x - y) < EPS ? 0 : (x < y ? -1 : 1);
     }
 
+    /* return INF if no intersection */
+    double intersect(const Ray &ray, const Sphere &, Point *);
+    double intersect(const Ray &ray, const Polygon &, Point *);
+    double intersect(const Ray &ray, const polyKDTree *, Point *p);
 }
 
 

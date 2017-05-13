@@ -1,4 +1,6 @@
 #include "geometry.h"
+#include "kdtree.h"
+#include "light.h"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -83,9 +85,6 @@ namespace Equestria
         return sqrt(len2());
     }
 
-    Ray::Ray(): bgn(), vec() {}
-    Ray::Ray(const Point &b, const Point &v): bgn(b), vec(v / v.len()) {}
-
     Sphere::Sphere(): center(), radius(0) {}
     Sphere::Sphere(const Point &a, double r): center(a), radius(r) {}
     Sphere::Sphere(double ox, double oy, double oz, double r): center(ox, oy, oz), radius(r) {}
@@ -138,61 +137,6 @@ namespace Equestria
         normvf = Point(yz, -xz, xy);
     }
 
-    double Ray::intersect(const Sphere &s, Point *p) const
-    {
-        Point t = bgn - s.center;
-        double b = 2 * dotsProduct(t, vec),
-               c = t.len2() - sqr(s.radius),
-               delta = sqr(b) - 4 * c;
-        if (delta < EPS)
-            return INF;
-        delta = sqrt(delta);
-        double t1 = (-b - delta) / 2,
-               t2 = (-b + delta) / 2,
-               res;
-        if (t1 < EPS)
-            if (t2 < EPS)
-                return INF;
-            else
-                res = t2;
-        else if (t2 < EPS)
-            res = t1;
-        else
-            res = std::min(t1, t2);
-        *p = bgn + res * vec;
-        return res;
-    }
-
-    double Ray::intersect(const Polygon &s, Point *p) const
-    {
-        Point ts = bgn - s.pList[s.c1];
-        double k = vec.x * s.yz - vec.y * s.xz + vec.z * s.xy,
-               b = ts.x * s.yz - ts.y * s.xz + ts.z * s.xy;
-        if (fabs(k) < EPS)
-            return INF;
-        double t = -b / k;
-        if (t < EPS) return INF;
-        Point ret = bgn + t * vec;
-
-        double txy = s.normvf.x * ret.y - s.normvf.y * ret.x,
-               txz = s.normvf.x * ret.z - s.normvf.z * ret.x,
-               tyz = s.normvf.y * ret.z - s.normvf.z * ret.y;
-        for (int i = 0; i < s.num - 1; ++i)
-            if (determinant(s.pList[i], s.pList[i + 1], s.normvf) +
-                (s.pList[i].x - s.pList[i + 1].x) * tyz -
-                (s.pList[i].y - s.pList[i + 1].y) * txz +
-                (s.pList[i].z - s.pList[i + 1].z) * txy < -EPS)
-                return INF;
-        if (determinant(s.pList[s.num - 1], s.pList[1], s.normvf) +
-            (s.pList[s.num - 1].x - s.pList[1].x) * tyz -
-            (s.pList[s.num - 1].y - s.pList[1].y) * txz +
-            (s.pList[s.num - 1].z - s.pList[1].z) * txy < -EPS)
-            return INF;
-
-        *p = ret;
-        return t;
-    }
-
     double dotsProduct(const Point &a, const Point &b)
     {
         return a.x * b.x + a.y * b.y + a.z * b.z;
@@ -217,5 +161,167 @@ namespace Equestria
         return crossProduct(b - a, c - b).len() / 2;
     }
 
+    double intersect(const Ray &ray, const Sphere &s, Point *p)
+    {
+        Point t = ray.bgn - s.center;
+        double b = 2 * dotsProduct(t, ray.vec),
+               c = t.len2() - sqr(s.radius),
+               delta = sqr(b) - 4 * c;
+        if (delta < EPS)
+            return INF;
+        delta = sqrt(delta);
+        double t1 = (-b - delta) / 2,
+               t2 = (-b + delta) / 2,
+               res;
+        if (t1 < EPS)
+            if (t2 < EPS)
+                return INF;
+            else
+                res = t2;
+        else if (t2 < EPS)
+            res = t1;
+        else
+            res = std::min(t1, t2);
+        *p = ray.bgn + res * ray.vec;
+        return res;
+    }
+
+    double intersect(const Ray &ray, const Polygon &s, Point *p)
+    {
+        Point ts = ray.bgn - s.pList[s.c1];
+        double k = ray.vec.x * s.yz - ray.vec.y * s.xz + ray.vec.z * s.xy,
+               b = ts.x * s.yz - ts.y * s.xz + ts.z * s.xy;
+        if (fabs(k) < EPS)
+            return INF;
+        double t = -b / k;
+        if (t < EPS)
+            return INF;
+        Point ret = ray.bgn + t * ray.vec;
+
+        double txy = s.normvf.x * ret.y - s.normvf.y * ret.x,
+               txz = s.normvf.x * ret.z - s.normvf.z * ret.x,
+               tyz = s.normvf.y * ret.z - s.normvf.z * ret.y;
+        for (int i = 0; i < s.num - 1; ++i)
+            if (determinant(s.pList[i], s.pList[i + 1], s.normvf) +
+                (s.pList[i].x - s.pList[i + 1].x) * tyz -
+                (s.pList[i].y - s.pList[i + 1].y) * txz +
+                (s.pList[i].z - s.pList[i + 1].z) * txy < -EPS)
+                return INF;
+        if (determinant(s.pList[s.num - 1], s.pList[1], s.normvf) +
+            (s.pList[s.num - 1].x - s.pList[1].x) * tyz -
+            (s.pList[s.num - 1].y - s.pList[1].y) * txz +
+            (s.pList[s.num - 1].z - s.pList[1].z) * txy < -EPS)
+            return INF;
+
+        *p = ret;
+        return t;
+    }
+
+    double intersect(const Ray &ray, const polyKDTree *tree, Point *p)
+    {
+        /*double l = 0, r = INF;
+        for (int i = 0; i < 3; ++i) {
+            const double &di = ray.vec.value[i];
+            const double &bi = ray.bgn.value[i];
+            const double &mn = bdmin[i], &mx = bdmax[i];
+            if (fabs(di) < EPS) {
+                if (bi + EPS < mn || bi - EPS > mx)
+                    return INF;
+            }
+            else {
+                double l2 = (mn - bi) / di, r2 = (mx - bi) / di;
+                if (l2 < r2)
+                    l = max(l, l2), r = min(r, r2);
+                else
+                    l = max(l, r2), r = min(r, l2);
+                if (l + EPS >= r)
+                    return INF;
+            }
+        }*/
+        typedef const double &rcd_t;
+        rcd_t dx = ray.vec.x, dy = ray.vec.y, dz = ray.vec.z;
+        rcd_t bx = ray.bgn.x, by = ray.bgn.y, bz = ray.bgn.z;
+        rcd_t mnx = tree->bdmin[0], mny = tree->bdmin[1], mnz = tree->bdmin[2];
+        rcd_t mxx = tree->bdmax[0], mxy = tree->bdmax[1], mxz = tree->bdmax[2];
+        double t;
+        if (bx < mnx) {
+            if (dx <= 0)
+                return INF;
+            t = (mnx - bx) / dx;
+        }
+        else if (bx > mxx) {
+            if (dx >= 0)
+                return INF;
+            t = (mxx - bx) / dx;
+        }
+        else if (by < mny) {
+            if (dy <= 0)
+                return INF;
+            t = (mny - by) / dy;
+        }
+        else if (by > mxy) {
+            if (dy >= 0)
+                return INF;
+            t = (mxy - by) / dy;
+        }
+        else if (bz < mnz) {
+            if (dz <= 0)
+                return INF;
+            t = (mnz - bz) / dz;
+        }
+        else if (bz > mxz) {
+            if (dz >= 0)
+                return INF;
+            t = (mxz - bz) / dz;
+        }
+        else
+            goto calculate;
+        {
+            double tx = bx + t * dx, ty = by + t * dy, tz = bz + t * dz;
+            if (tx < mnx - EPS || tx > mxx + EPS || ty < mny - EPS || ty > mxy + EPS || tz < mnz - EPS || tz > mxz + EPS)
+                return INF;
+        }
+calculate:
+        if (tree->son[0]) { /* have 2 sons */
+            int k = dcmp(ray.bgn.value[tree->split_dir], tree->split_pos);
+            if (k == 0) { // ray.bgn.value[split_dir] == split_pos
+                k = dcmp(ray.vec.value[tree->split_dir]);
+                if (k)
+                    return intersect(ray, tree->son[(k + 1) / 2], p);
+                else {
+                    Point p0, p1;
+                    double t0 = intersect(ray, tree->son[0], &p0);
+                    double t1 = intersect(ray, tree->son[1], &p1);
+                    if (t0 < t1) {
+                        *p = p0;
+                        return t0;
+                    }
+                    else {
+                        *p = p1;
+                        return t1;
+                    }
+                }
+            }
+            else {
+                k = (k + 1) / 2; // -1 -> 0   1 -> 1
+                double t = intersect(ray, tree->son[k], p);
+                if (t != INF)
+                    return t;
+                return intersect(ray, tree->son[k ^ 1], p);
+            }
+        }
+        else {
+            double ans = INF;
+            for (auto i = tree->begin; i != tree->end; ++i) {
+                Point tmp;
+                double t = intersect(ray, *i, &tmp);
+                if (t < ans) {
+                    ans = t;
+                    *p = tmp;
+                }
+            }
+            return ans;
+        }
+    }
 
 }

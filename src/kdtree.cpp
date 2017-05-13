@@ -1,4 +1,6 @@
 #include "kdtree.h"
+#include "geometry.h"
+#include "light.h"
 #include <cmath>
 #include <cstring>
 #include <numeric>
@@ -114,111 +116,6 @@ namespace Equestria
                 son[1]->draw(Mx);
         }
     */
-    double polyKDTree::intersect(const Ray &ray, Point *p)const
-    {
-        /*double l = 0, r = INF;
-        for (int i = 0; i < 3; ++i) {
-            const double &di = ray.vec.value[i];
-            const double &bi = ray.bgn.value[i];
-            const double &mn = bdmin[i], &mx = bdmax[i];
-            if (fabs(di) < EPS) {
-                if (bi + EPS < mn || bi - EPS > mx)
-                    return INF;
-            }
-            else {
-                double l2 = (mn - bi) / di, r2 = (mx - bi) / di;
-                if (l2 < r2)
-                    l = max(l, l2), r = min(r, r2);
-                else
-                    l = max(l, r2), r = min(r, l2);
-                if (l + EPS >= r)
-                    return INF;
-            }
-        }*/
-        const double &dx = ray.vec.x, &dy = ray.vec.y, &dz = ray.vec.z;
-        const double &bx = ray.bgn.x, &by = ray.bgn.y, &bz = ray.bgn.z;
-        double mnx = bdmin[0], mny = bdmin[1], mnz = bdmin[2];
-        double mxx = bdmax[0], mxy = bdmax[1], mxz = bdmax[2];
-        double t;
-        if (bx < mnx) {
-            if (dx <= 0)
-                return INF;
-            t = (mnx - bx) / dx;
-        }
-        else if (bx > mxx) {
-            if (dx >= 0)
-                return INF;
-            t = (mxx - bx) / dx;
-        }
-        else if (by < mny) {
-            if (dy <= 0)
-                return INF;
-            t = (mny - by) / dy;
-        }
-        else if (by > mxy) {
-            if (dy >= 0)
-                return INF;
-            t = (mxy - by) / dy;
-        }
-        else if (bz < mnz) {
-            if (dz <= 0)
-                return INF;
-            t = (mnz - bz) / dz;
-        }
-        else if (bz > mxz) {
-            if (dz >= 0)
-                return INF;
-            t = (mxz - bz) / dz;
-        }
-        else
-            goto calculate;
-        {
-            double tx = bx + t * dx, ty = by + t * dy, tz = bz + t * dz;
-            if (tx < mnx - EPS || tx > mxx + EPS || ty < mny - EPS || ty > mxy + EPS || tz < mnz - EPS || tz > mxz + EPS)
-                return INF;
-        }
-calculate:
-        if (son[0]) { /* have 2 sons */
-            int k = dcmp(ray.bgn.value[split_dir], split_pos);
-            if (k == 0) { // ray.bgn.value[split_dir] == split_pos
-                k = dcmp(ray.vec.value[split_dir]);
-                if (k)
-                    return son[(k + 1) / 2]->intersect(ray, p);
-                else {
-                    Point p0, p1;
-                    double t0 = son[0]->intersect(ray, &p0);
-                    double t1 = son[1]->intersect(ray, &p1);
-                    if (t0 < t1) {
-                        *p = p0;
-                        return t0;
-                    }
-                    else {
-                        *p = p1;
-                        return t1;
-                    }
-                }
-            }
-            else {
-                k = (k + 1) / 2; // -1 -> 0   1 -> 1
-                double t = son[k]->intersect(ray, p);
-                if (t != INF)
-                    return t;
-                return son[k ^ 1]->intersect(ray, p);
-            }
-        }
-        else {
-            double ans = INF;
-            for (vpolyit i = begin; i != end; ++i) {
-                Point tmp;
-                double t = ray.intersect(*i, &tmp);
-                if (t < ans) {
-                    ans = t;
-                    *p = tmp;
-                }
-            }
-            return ans;
-        }
-    }
 
     ptnKDTree::ptnKDTree(vptnit bgn, vptnit ed, int order):
         bdmin{INF, INF, INF}, bdmax{-INF, -INF, -INF}, son{NULL, NULL}, begin(bgn), end(ed)

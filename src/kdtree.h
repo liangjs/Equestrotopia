@@ -21,7 +21,6 @@ namespace Equestria
         polyKDTree(vpolyit begin, vpolyit end);
         ~polyKDTree();
         //void draw(double Mx);
-        double intersect(const Ray &ray, Point *p)const; /* return INF if no intersection */
     private:
         static int __split(vpolyit begin, vpolyit end, vpolyit &lend, vpolyit &rbegin, double &pos, int splitter);
     };

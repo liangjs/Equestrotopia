@@ -17,6 +17,16 @@ namespace Equestria
         Point tau; // Accumulated reflected flux
     };
 
+    class Ray
+    {
+    public:
+        Point bgn, vec;
+
+        Ray();
+        Ray(const Point &b, const Point &v);
+
+    };
+
     class Photon
     {
     public:
