@@ -46,10 +46,8 @@ namespace Equestria
 
     polyKDTree::~polyKDTree()
     {
-        if (son[0])
-            delete son[0];
-        if (son[1])
-            delete son[1];
+        delete son[0];
+        delete son[1];
     }
 
     int polyKDTree::split(vpolyit begin, vpolyit end, vpolyit &lend, vpolyit &rbegin, int splitter)
@@ -184,10 +182,8 @@ namespace Equestria
 
     ptnKDTree::~ptnKDTree()
     {
-        if (son[0])
-            delete son[0];
-        if (son[1])
-            delete son[1];
+        delete son[0];
+        delete son[1];
     }
 
     void ptnKDTree::find(const Hitpoint &hp, std::vector<Photon*> &lst)
@@ -211,7 +207,7 @@ namespace Equestria
                 mindist += sqr(hp.position.value[i] - bdmin[i]);
 
         if (mindist > hp.radius + EPS) return;
-        if (son[0]) son[0]->find(hp, lst);
-        if (son[1]) son[1]->find(hp, lst); 
+        son[0]->find(hp, lst);
+        son[1]->find(hp, lst); 
     }
 }
