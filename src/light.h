@@ -10,7 +10,7 @@ namespace Equestria
         Point normv;
         Point raydir;
         int material;
-        double x, y; // Pixel location
+        int x, y; // Pixel location
         Point wgt; // Pixel weight
         double radius;
         int ptncount;  // Accumulated photon count
@@ -36,6 +36,26 @@ namespace Equestria
         Photon(const Ray &ray, const Point &clr);
     };
 
+    struct Camera {
+        Point focus;
+        Point o, vx, vy;
+        Point normal; // normal = (o - focus) / |o - focus|
+        // |o - focus| = focal length
+        // o ~ (height/2,width/2)
+        // o-vx/2->o+vx/2 ~ (0,width/2)->(height,width/2)
+        // o-vy/2->o+vy/2 ~ (height/2,0)->(height/2,width)
+        /* 
+                |
+                |
+         -------o--------> y
+                |
+                |
+                |
+                |
+                v
+                x
+         */
+    };
 }
 
 #endif // LIGHT_H

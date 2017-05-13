@@ -3,6 +3,7 @@
 
 #include <cmath>
 #include <vector>
+#include <iostream>
 
 namespace Equestria
 {
@@ -40,6 +41,8 @@ namespace Equestria
 
         double len() const;
         double len2() const;
+        friend std::ostream &operator<< (std::ostream &os, Point &p);
+        friend std::istream &operator>> (std::istream &is, Point &p);
     };
 
     class Sphere

@@ -15,7 +15,7 @@ namespace Equestria
         int split_dir;
         double split_pos;
 
-        typedef std::vector<Polygon>::iterator vpolyit;
+        typedef std::vector<Polygon*>::iterator vpolyit;
         vpolyit begin, end;
 
         polyKDTree(vpolyit begin, vpolyit end);

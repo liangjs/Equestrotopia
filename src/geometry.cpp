@@ -84,6 +84,14 @@ namespace Equestria
     {
         return sqrt(len2());
     }
+    std::ostream &operator<< (std::ostream &os, Point &p)
+    {
+        return os << p.x << ' ' << p.y << ' ' << p.z;
+    }
+    std::istream &operator>> (std::istream &is, Point &p)
+    {
+        return is >> p.x >> p.y >> p.z;
+    }
 
     Sphere::Sphere(): center(), radius(0) {}
     Sphere::Sphere(const Point &a, double r): center(a), radius(r) {}
@@ -314,7 +322,7 @@ calculate:
             double ans = INF;
             for (auto i = tree->begin; i != tree->end; ++i) {
                 Point tmp;
-                double t = intersect(ray, *i, &tmp);
+                double t = intersect(ray, **i, &tmp);
                 if (t < ans) {
                     ans = t;
                     *p = tmp;

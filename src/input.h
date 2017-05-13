@@ -8,7 +8,7 @@
 
 namespace Equestria
 {
-    extern std::vector<Polygon> polygon;
+    extern std::vector<Polygon*> polygon;
     extern std::map<std::string, int> mtlIndex;
 
     struct Material {

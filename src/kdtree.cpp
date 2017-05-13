@@ -18,13 +18,13 @@ namespace Equestria
             bdmin[i] = INF, bdmax[i] = -INF;
         for (vpolyit i = begin; i != end; ++i)
             for (int j = 0; j < 3; ++j) {
-                bdmin[j] = min(bdmin[j], i->bdmin[j]);
-                bdmax[j] = max(bdmax[j], i->bdmax[j]);
+                bdmin[j] = min(bdmin[j], (*i)->bdmin[j]);
+                bdmax[j] = max(bdmax[j], (*i)->bdmax[j]);
             }
         if (begin + 1 == end)
             son[0] = son[1] = NULL;
         else {
-            vector<Polygon> v[3];
+            vector<Polygon*> v[3];
             int besti, bestval = end - begin, bestpos;
             vpolyit lend, rbegin;
             for (int i = 0; i < 3; ++i) {
@@ -61,8 +61,8 @@ namespace Equestria
     {
         int vsize = end - begin;
         vector<double> vmin(vsize), vmax(vsize), vall(vsize * 2);
-        transform(begin, end, vmin.begin(), [ = ](const Polygon & p) {return p.bdmin[splitter];});
-        transform(begin, end, vmax.begin(), [ = ](const Polygon & p) {return p.bdmax[splitter];});
+        transform(begin, end, vmin.begin(), [ = ](const Polygon * p) {return p->bdmin[splitter];});
+        transform(begin, end, vmax.begin(), [ = ](const Polygon * p) {return p->bdmax[splitter];});
         sort(vmin.begin(), vmin.end());
         sort(vmax.begin(), vmax.end());
         merge(vmin.begin(), vmin.end(), vmax.begin(), vmax.end(), vall.begin());
@@ -77,45 +77,14 @@ namespace Equestria
                 pos = t;
             }
         }
-        auto ord = [ = ](const Polygon & p) {return p.bdmax[splitter] <= pos ? -1 : (p.bdmin[splitter] >= pos ? 1 : 0);};
-        sort(begin, end, [ & ](const Polygon & p1, const Polygon & p2) {return ord(p1) < ord(p2);});
+        auto ord = [ = ](const Polygon * p) {return p->bdmax[splitter] <= pos ? -1 : (p->bdmin[splitter] >= pos ? 1 : 0);};
+        sort(begin, end, [ & ](const Polygon * p1, const Polygon * p2) {return ord(p1) < ord(p2);});
         for (lend = begin; lend != end && ord(*lend) <= 0;)
             ++lend;
         for (rbegin = begin; rbegin != end && ord(*rbegin) < 0;)
             ++rbegin;
         return ans;
     }
-    /*
-        void polyKDTree::draw(double Mx)
-        {
-            glBegin(GL_LINE_LOOP);
-            glVertex3d(bdmin[0]/Mx, bdmin[1]/Mx, bdmin[2]/Mx);
-            glVertex3d(bdmin[0]/Mx, bdmin[1]/Mx, bdmax[2]/Mx);
-            glVertex3d(bdmin[0]/Mx, bdmax[1]/Mx, bdmax[2]/Mx);
-            glVertex3d(bdmin[0]/Mx, bdmax[1]/Mx, bdmin[2]/Mx);
-            glEnd();
-            glBegin(GL_LINE_LOOP);
-            glVertex3d(bdmax[0]/Mx, bdmin[1]/Mx, bdmin[2]/Mx);
-            glVertex3d(bdmax[0]/Mx, bdmin[1]/Mx, bdmax[2]/Mx);
-            glVertex3d(bdmax[0]/Mx, bdmax[1]/Mx, bdmax[2]/Mx);
-            glVertex3d(bdmax[0]/Mx, bdmax[1]/Mx, bdmin[2]/Mx);
-            glEnd();
-            glBegin(GL_LINES);
-            glVertex3d(bdmin[0]/Mx, bdmin[1]/Mx, bdmin[2]/Mx);
-            glVertex3d(bdmax[0]/Mx, bdmin[1]/Mx, bdmin[2]/Mx);
-            glVertex3d(bdmin[0]/Mx, bdmin[1]/Mx, bdmax[2]/Mx);
-            glVertex3d(bdmax[0]/Mx, bdmin[1]/Mx, bdmax[2]/Mx);
-            glVertex3d(bdmin[0]/Mx, bdmax[1]/Mx, bdmax[2]/Mx);
-            glVertex3d(bdmax[0]/Mx, bdmax[1]/Mx, bdmax[2]/Mx);
-            glVertex3d(bdmin[0]/Mx, bdmax[1]/Mx, bdmin[2]/Mx);
-            glVertex3d(bdmax[0]/Mx, bdmax[1]/Mx, bdmin[2]/Mx);
-            glEnd();
-            if (son[0])
-                son[0]->draw(Mx);
-            if (son[1])
-                son[1]->draw(Mx);
-        }
-    */
 
     ptnKDTree::ptnKDTree(vptnit bgn, vptnit ed, int order):
         bdmin{INF, INF, INF}, bdmax{-INF, -INF, -INF}, son{NULL, NULL}, begin(bgn), end(ed)
