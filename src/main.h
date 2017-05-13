@@ -1,13 +1,9 @@
 #ifndef MAIN_H
 #define MAIN_H
 
-#define WINDOW_SIZE 512
+#define WINDOW_WIDTH 800
+#define WINDOW_HEIGHT 600
 
-#include "input.h"
-
-void display();
-void initialize(const std::string &path);
-void reshape(int w, int h);
 int main(int argc, char *argv[]);
 
 #endif

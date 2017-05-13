@@ -1,6 +1,7 @@
 #ifndef KDTREE_H
 
 #include "geometry.h"
+#include "light.h"
 #include <vector>
 
 namespace Equestria

@@ -13,8 +13,6 @@ namespace Equestria
     class Ray;
     class Polygon;
     class Sphere;
-    class Photon;
-    struct Hitpoint;
 
     typedef double &double_ref;
 
@@ -53,15 +51,6 @@ namespace Equestria
 
         double intersect(const Sphere &, Point *) const;
         double intersect(const Polygon &, Point *) const;
-    };
-
-    class Photon
-    {
-    public:
-        Ray light;
-        Point rgb;
-
-        Photon(const Ray& ray, const Point& clr);
     };
 
     class Sphere
@@ -110,18 +99,6 @@ namespace Equestria
         return fabs(x - y) < EPS ? 0 : (x < y ? -1 : 1);
     }
 
-    struct Hitpoint
-    {
-        Point position;
-        Point normv;
-        Point raydir;
-        int material;
-        double x, y; // Pixel location
-        Point wgt; // Pixel weight
-        double radius;
-        int ptncount;  // Accumulated photon count
-        Point tau; // Accumulated reflected flux
-    };
 }
 
 

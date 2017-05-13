@@ -22,9 +22,11 @@ namespace Equestria {
         }
         fin.close();
         for (auto i : mtlIndex) { // read brdf
-            bool ok = BRDF::read_brdf((i.first + ".binary").c_str(), material[i.second].brdf);
-            if (!ok)
-                std::cerr << "cannot read BRDF file \"" << i.first << ".binary\"" << std::endl;
+            bool ok = BRDF::read_brdf((i.first + ".brdf").c_str(), material[i.second].brdf);
+            if (!ok) {
+                std::cerr << "cannot read BRDF file \"" << i.first << ".brdf\"" << std::endl;
+                material[i.second].brdf = NULL;
+            }
         }
     }
 
