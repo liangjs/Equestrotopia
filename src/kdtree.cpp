@@ -137,8 +137,8 @@ namespace Equestria
         }*/
         const double &dx = ray.vec.x, &dy = ray.vec.y, &dz = ray.vec.z;
         const double &bx = ray.bgn.x, &by = ray.bgn.y, &bz = ray.bgn.z;
-        double mnx = bdmin[0]-EPS, mny = bdmin[1]-EPS, mnz = bdmin[2]-EPS;
-        double mxx = bdmax[0]+EPS, mxy = bdmax[1]+EPS, mxz = bdmax[2]+EPS;
+        double mnx = bdmin[0], mny = bdmin[1], mnz = bdmin[2];
+        double mxx = bdmax[0], mxy = bdmax[1], mxz = bdmax[2];
         double t;
         if (bx < mnx) {
             if (dx <= 0)
@@ -170,11 +170,12 @@ namespace Equestria
                 return INF;
             t = (mxz - bz) / dz;
         }
-        else 
-            return INF;
+        else
+            goto calculate;
         double tx = bx + t * dx, ty = by + t * dy, tz = bz + t * dz;
-        if (tx < mnx || tx > mxx || ty < mny || ty > mxy || tz < mnz || tz > mxz)
+        if (tx < mnx - EPS || tx > mxx + EPS || ty < mny - EPS || ty > mxy + EPS || tz < mnz - EPS || tz > mxz + EPS)
             return INF;
+calculate:
         if (son[0]) { /* have 2 sons */
             int k = dcmp(ray.bgn.value[split_dir], split_pos);
             if (k == 0) // ray.bgn.value[split_dir] == split_pos
@@ -230,7 +231,7 @@ namespace Equestria
         if (bdmin[v] == bdmax[v])
             return;
         sort(bgn, ed,
-                  [v](Photon * a, Photon * b)->bool{return a->light.bgn.value[v] < b->light.bgn.value[v];});
+             [v](Photon * a, Photon * b)->bool{return a->light.bgn.value[v] < b->light.bgn.value[v];});
         vptnit split = bgn;
         int maxsplit = 0;
         for (vptnit i = bgn + 1; i != ed; ++i)
