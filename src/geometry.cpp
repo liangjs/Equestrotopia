@@ -171,6 +171,7 @@ namespace Equestria
         if (fabs(k) < EPS)
             return INF;
         double t = -b / k;
+        if (t < EPS) return INF;
         Point ret = bgn + t * vec;
 
         double txy = s.normvf.x * ret.y - s.normvf.y * ret.x,
