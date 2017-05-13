@@ -6,6 +6,8 @@
 
 //#include <GL/glut.h>
 
+using namespace std;
+
 namespace Equestria
 {
     polyKDTree::polyKDTree(vpolyit _begin, vpolyit _end): begin(_begin), end(_end)
@@ -14,22 +16,24 @@ namespace Equestria
             bdmin[i] = INF, bdmax[i] = -INF;
         for (vpolyit i = begin; i != end; ++i)
             for (int j = 0; j < 3; ++j) {
-                bdmin[j] = std::min(bdmin[j], i->bdmin[j]);
-                bdmax[j] = std::max(bdmax[j], i->bdmax[j]);
+                bdmin[j] = min(bdmin[j], i->bdmin[j]);
+                bdmax[j] = max(bdmax[j], i->bdmax[j]);
             }
         if (begin + 1 == end)
             son[0] = son[1] = NULL;
         else {
-            std::vector<Polygon> v[3];
-            int besti, bestval = end - begin;
+            vector<Polygon> v[3];
+            int besti, bestval = end - begin, bestpos;
             vpolyit lend, rbegin;
             for (int i = 0; i < 3; ++i) {
                 v[i].assign(begin, end);
                 vpolyit _lend, _rbegin;
-                int val = split(v[i].begin(), v[i].end(), _lend, _rbegin, i);
+                double posi;
+                int val = __split(v[i].begin(), v[i].end(), _lend, _rbegin, posi, i);
                 if (val < bestval) {
                     besti = i;
                     bestval = val;
+                    bestpos = posi;
                     lend = _lend;
                     rbegin = _rbegin;
                 }
@@ -37,7 +41,8 @@ namespace Equestria
             if (bestval == end - begin)
                 son[0] = son[1] = NULL;
             else {
-                std::copy(v[besti].begin(), v[besti].end(), begin);
+                split_dir = besti, split_pos = bestpos;
+                copy(v[besti].begin(), v[besti].end(), begin);
                 son[0] = new polyKDTree(begin, begin + (lend - v[besti].begin()));
                 son[1] = new polyKDTree(end - (v[besti].end() - rbegin), end);
             }
@@ -50,29 +55,28 @@ namespace Equestria
         delete son[1];
     }
 
-    int polyKDTree::split(vpolyit begin, vpolyit end, vpolyit &lend, vpolyit &rbegin, int splitter)
+    int polyKDTree::__split(vpolyit begin, vpolyit end, vpolyit &lend, vpolyit &rbegin, double &pos, int splitter)
     {
         int vsize = end - begin;
-        std::vector<double> vmin(vsize), vmax(vsize), vall(vsize * 2);
-        std::transform(begin, end, vmin.begin(), [ = ](const Polygon & p) {return p.bdmin[splitter];});
-        std::transform(begin, end, vmax.begin(), [ = ](const Polygon & p) {return p.bdmax[splitter];});
-        std::sort(vmin.begin(), vmin.end());
-        std::sort(vmax.begin(), vmax.end());
-        std::merge(vmin.begin(), vmin.end(), vmax.begin(), vmax.end(), vall.begin());
-        std::vector<double>::iterator itmin = vmin.begin(), itmax = vmax.begin();
+        vector<double> vmin(vsize), vmax(vsize), vall(vsize * 2);
+        transform(begin, end, vmin.begin(), [ = ](const Polygon & p) {return p.bdmin[splitter];});
+        transform(begin, end, vmax.begin(), [ = ](const Polygon & p) {return p.bdmax[splitter];});
+        sort(vmin.begin(), vmin.end());
+        sort(vmax.begin(), vmax.end());
+        merge(vmin.begin(), vmin.end(), vmax.begin(), vmax.end(), vall.begin());
         int ans = vsize;
-        double pos = vall.front();
+        pos = vall.front();
         for (auto t : vall) {
-            int num_min = std::upper_bound(vmax.begin(), vmax.end(), t) - vmax.begin();
-            int num_max = vmin.end() - std::lower_bound(vmin.begin(), vmin.end(), t);
-            int ans_now = vsize - std::min(num_min, num_max);
+            int num_min = upper_bound(vmax.begin(), vmax.end(), t) - vmax.begin();
+            int num_max = vmin.end() - lower_bound(vmin.begin(), vmin.end(), t);
+            int ans_now = vsize - min(num_min, num_max);
             if (ans_now < ans) {
                 ans = ans_now;
                 pos = t;
             }
         }
         auto ord = [ = ](const Polygon & p) {return p.bdmax[splitter] <= pos ? -1 : (p.bdmin[splitter] >= pos ? 1 : 0);};
-        std::sort(begin, end, [ & ](const Polygon & p1, const Polygon & p2) {return ord(p1) < ord(p2);});
+        sort(begin, end, [ & ](const Polygon & p1, const Polygon & p2) {return ord(p1) < ord(p2);});
         for (lend = begin; lend != end && ord(*lend) <= 0;)
             ++lend;
         for (rbegin = begin; rbegin != end && ord(*rbegin) < 0;)
@@ -112,7 +116,7 @@ namespace Equestria
     */
     double polyKDTree::intersect(const Ray &ray, Point *p)const
     {
-        double l = 0, r = INF;
+        /*double l = 0, r = INF;
         for (int i = 0; i < 3; ++i) {
             const double &di = ray.vec.value[i];
             const double &bi = ray.bgn.value[i];
@@ -124,18 +128,77 @@ namespace Equestria
             else {
                 double l2 = (mn - bi) / di, r2 = (mx - bi) / di;
                 if (l2 < r2)
-                    l = std::max(l, l2), r = std::min(r, r2);
+                    l = max(l, l2), r = min(r, r2);
                 else
-                    l = std::max(l, r2), r = std::min(r, l2);
+                    l = max(l, r2), r = min(r, l2);
                 if (l + EPS >= r)
                     return INF;
             }
+        }*/
+        const double &dx = ray.vec.x, &dy = ray.vec.y, &dz = ray.vec.z;
+        const double &bx = ray.bgn.x, &by = ray.bgn.y, &bz = ray.bgn.z;
+        double mnx = bdmin[0]-EPS, mny = bdmin[1]-EPS, mnz = bdmin[2]-EPS;
+        double mxx = bdmax[0]+EPS, mxy = bdmax[1]+EPS, mxz = bdmax[2]+EPS;
+        double t;
+        if (bx < mnx) {
+            if (dx <= 0)
+                return INF;
+            t = (mnx - bx) / dx;
         }
-        if (son[0]) /* have 2 sons */ {
-            double t = son[0]->intersect(ray, p);
-            if (t != INF)
-                return t;
-            return son[1]->intersect(ray, p);
+        else if (bx > mxx) {
+            if (dx >= 0)
+                return INF;
+            t = (mxx - bx) / dx;
+        }
+        else if (by < mny) {
+            if (dy <= 0)
+                return INF;
+            t = (mny - by) / dy;
+        }
+        else if (by > mxy) {
+            if (dy >= 0)
+                return INF;
+            t = (mxy - by) / dy;
+        }
+        else if (bz < mnz) {
+            if (dz <= 0)
+                return INF;
+            t = (mnz - bz) / dz;
+        }
+        else if (bz > mxz) {
+            if (dz >= 0)
+                return INF;
+            t = (mxz - bz) / dz;
+        }
+        else 
+            return INF;
+        double tx = bx + t * dx, ty = by + t * dy, tz = bz + t * dz;
+        if (tx < mnx || tx > mxx || ty < mny || ty > mxy || tz < mnz || tz > mxz)
+            return INF;
+        if (son[0]) { /* have 2 sons */
+            int k = dcmp(ray.bgn.value[split_dir], split_pos);
+            if (k == 0) // ray.bgn.value[split_dir] == split_pos
+                k = dcmp(ray.vec.value[split_dir]);
+            if (k) {
+                k = (k + 1) / 2; // -1 -> 0   1 -> 1
+                double t = son[k]->intersect(ray, p);
+                if (t != INF)
+                    return t;
+                return son[k ^ 1]->intersect(ray, p);
+            }
+            else {
+                Point p0, p1;
+                double t0 = son[0]->intersect(ray, &p0);
+                double t1 = son[1]->intersect(ray, &p1);
+                if (t0 < t1) {
+                    *p = p0;
+                    return t0;
+                }
+                else {
+                    *p = p1;
+                    return t1;
+                }
+            }
         }
         else {
             double ans = INF;
@@ -155,23 +218,24 @@ namespace Equestria
         bdmin{INF, INF, INF}, bdmax{-INF, -INF, -INF}, son{NULL, NULL}, begin(bgn), end(ed)
     {
         for (vptnit i = bgn; i != ed; ++i)
-            for (int j = 0; j < 3; ++j)
-            {
-            bdmin[j] = std::min(bdmin[j], (*i)->light.bgn.value[j]);
-            bdmax[j] = std::max(bdmax[j], (*i)->light.bgn.value[j]);
+            for (int j = 0; j < 3; ++j) {
+                bdmin[j] = min(bdmin[j], (*i)->light.bgn.value[j]);
+                bdmax[j] = max(bdmax[j], (*i)->light.bgn.value[j]);
             }
         int v = order;
-        if (bdmin[v] == bdmax[v]) (v += 1) %= 3;
-        if (bdmin[v] == bdmax[v]) (v += 1) %= 3;
-        if (bdmin[v] == bdmax[v]) return;
-        std::sort(bgn, ed, 
-                [v](Photon *a, Photon *b)->bool{return a->light.bgn.value[v] < b->light.bgn.value[v];});
+        if (bdmin[v] == bdmax[v])
+            (v += 1) %= 3;
+        if (bdmin[v] == bdmax[v])
+            (v += 1) %= 3;
+        if (bdmin[v] == bdmax[v])
+            return;
+        sort(bgn, ed,
+                  [v](Photon * a, Photon * b)->bool{return a->light.bgn.value[v] < b->light.bgn.value[v];});
         vptnit split = bgn;
         int maxsplit = 0;
         for (vptnit i = bgn + 1; i != ed; ++i)
-            if (((*i)->light.bgn.value[v] != (*(i-1))->light.bgn.value[v]) &&
-                (maxsplit < abs((ed - i) + (i - bgn))))
-            {
+            if (((*i)->light.bgn.value[v] != (*(i - 1))->light.bgn.value[v]) &&
+                (maxsplit < abs((ed - i) + (i - bgn)))) {
                 maxsplit = abs((ed - i) + (i - bgn));
                 split = i;
             }
@@ -186,14 +250,13 @@ namespace Equestria
         delete son[1];
     }
 
-    void ptnKDTree::find(const Hitpoint &hp, std::vector<Photon*> &lst)
+    void ptnKDTree::find(const Hitpoint &hp, vector<Photon *> &lst)
     {
-        double dx = std::max(abs(bdmin[0] - hp.position.x), abs(bdmax[0] - hp.position.x)),
-               dy = std::max(abs(bdmin[1] - hp.position.y), abs(bdmax[1] - hp.position.y)),
-               dz = std::max(abs(bdmin[2] - hp.position.z), abs(bdmax[2] - hp.position.z));
+        double dx = max(abs(bdmin[0] - hp.position.x), abs(bdmax[0] - hp.position.x)),
+               dy = max(abs(bdmin[1] - hp.position.y), abs(bdmax[1] - hp.position.y)),
+               dz = max(abs(bdmin[2] - hp.position.z), abs(bdmax[2] - hp.position.z));
         double maxdist = sqr(dx) + sqr(dy) + sqr(dz);
-        if (maxdist < hp.radius + EPS)
-        {
+        if (maxdist < hp.radius + EPS) {
             for (vptnit i = begin; i != end; ++i)
                 lst.push_back(*i);
             return;
@@ -206,8 +269,9 @@ namespace Equestria
             else if (hp.position.value[i] < bdmin[i] - EPS)
                 mindist += sqr(hp.position.value[i] - bdmin[i]);
 
-        if (mindist > hp.radius + EPS) return;
+        if (mindist > hp.radius + EPS)
+            return;
         son[0]->find(hp, lst);
-        son[1]->find(hp, lst); 
+        son[1]->find(hp, lst);
     }
 }

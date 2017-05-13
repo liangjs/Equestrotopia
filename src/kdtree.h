@@ -11,6 +11,8 @@ namespace Equestria
     public:
         double bdmin[3], bdmax[3]; // bounding box
         polyKDTree *son[2];
+        int split_dir;
+        double split_pos;
 
         typedef std::vector<Polygon>::iterator vpolyit;
         vpolyit begin, end;
@@ -19,8 +21,8 @@ namespace Equestria
         ~polyKDTree();
         //void draw(double Mx);
         double intersect(const Ray &ray, Point *p)const; /* return INF if no intersection */
-
-        static int split(vpolyit begin, vpolyit end, vpolyit &lend, vpolyit &rbegin, int splitter);
+    private:
+        static int __split(vpolyit begin, vpolyit end, vpolyit &lend, vpolyit &rbegin, double &pos, int splitter);
     };
 
     class ptnKDTree

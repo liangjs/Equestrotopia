@@ -1,6 +1,7 @@
 #ifndef GEOMETRY_H
 #define GEOMETRY_H
 
+#include <cmath>
 #include <vector>
 
 namespace Equestria
@@ -104,6 +105,10 @@ namespace Equestria
     {
         return x * x;
     };
+    inline int dcmp(double x, double y = 0)
+    {
+        return fabs(x - y) < EPS ? 0 : (x < y ? -1 : 1);
+    }
 
     struct Hitpoint
     {
