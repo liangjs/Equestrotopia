@@ -231,6 +231,8 @@ namespace Equestria
     double intersect(const Ray &ray, const polyKDTree *tree, Polygon *&p, double lasthit)
     {
         using namespace std;
+        if (tree == NULL)
+            return INF;
         double l = 0, r = INF;
         for (int i = 0; i < 3; ++i) {
             const double &di = ray.vec.value[i];
@@ -252,13 +254,23 @@ namespace Equestria
         }
         if (l >= lasthit)
             return INF;
-        if (tree->son[0]) { // have 2 sons
+        if (tree->split) {
             int k = dcmp(ray.bgn.value[tree->split_dir], tree->split_pos);
             if (k == 0) // ray.bgn.value[split_dir] == split_pos
                 k = dcmp(ray.vec.value[tree->split_dir]);
             k = (k + 1) / 2; // -1 -> 0  0 -> 0   1 -> 1
-            Polygon *p1, *p2;
+            Polygon *p1, *p2, *pm;
             double t1 = intersect(ray, tree->son[k], p1, lasthit);
+            double tm = intersect(ray, tree->mson, pm, min(t1, lasthit));
+            bool ig = t1 != INF;
+            if (tm < t1) {
+                t1 = tm;
+                p1 = pm;
+            }
+            if (ig) {
+                p = p1;
+                return t1;
+            }
             double t2 = intersect(ray, tree->son[k ^ 1], p2, min(t1, lasthit));
             if (t1 >= lasthit && t2 >= lasthit)
                 return INF;

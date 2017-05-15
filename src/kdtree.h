@@ -12,6 +12,7 @@ namespace Equestria
     public:
         double bdmin[3], bdmax[3]; // bounding box
         polyKDTree *son[2], *mson;
+        bool split;
         int split_dir;
         double split_pos;
 
@@ -23,6 +24,7 @@ namespace Equestria
         //void draw(double Mx);
     private:
         static int __split(vpolyit begin, vpolyit end, vpolyit &lend, vpolyit &rbegin, double &pos, int splitter);
+        static polyKDTree *build(vpolyit begin, vpolyit end);
     };
     
     class ptnKDTree

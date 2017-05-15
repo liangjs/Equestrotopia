@@ -24,7 +24,8 @@ namespace Equestria
                 bdmax[j] = max(bdmax[j], (*i)->bdmax[j]);
             }
         son[0] = son[1] = NULL;
-        if (begin + 1 == end)
+        split = false;
+        if (end - begin <= 1)
             return;
         vector<Polygon *> v[3];
         int besti, bestval = end - begin;
@@ -47,12 +48,25 @@ namespace Equestria
             return;
         split_dir = besti, split_pos = bestpos;
         copy(v[besti].begin(), v[besti].end(), begin);
-        son[0] = new polyKDTree(begin, begin + (lend - v[besti].begin()));
-        son[1] = new polyKDTree(end - (v[besti].end() - rbegin), end);
+        auto rb = end - (v[besti].end() - rbegin), le = begin + (lend - v[besti].begin());
+        mson = build(rb, le);
+        son[0] = build(begin, rb);
+        son[1] = build(le, end);
+        split = true;
+        //son[0] = new polyKDTree(begin, begin + (lend - v[besti].begin()));
+        //son[1] = new polyKDTree(end - (v[besti].end() - rbegin), end);
+    }
+    
+    polyKDTree *polyKDTree::build(vpolyit begin, vpolyit end)
+    {
+        if (begin == end)
+            return NULL;
+        return new polyKDTree(begin, end);
     }
 
     polyKDTree::~polyKDTree()
     {
+        delete mson;
         delete son[0];
         delete son[1];
     }
