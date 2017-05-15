@@ -15,6 +15,7 @@ namespace Equestria
         double radius;
         int ptncount;  // Accumulated photon count
         Point tau; // Accumulated reflected flux
+        Point direct; // direct light
     };
 
     class Ray
@@ -55,6 +56,12 @@ namespace Equestria
                 v
                 x
          */
+    };
+
+    struct Light {
+        Point pos;
+        Point color;
+        double power; /* 0~1 */
     };
 }
 

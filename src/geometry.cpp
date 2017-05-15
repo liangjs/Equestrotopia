@@ -138,11 +138,12 @@ namespace Equestria
             zmin = std::min(zmin, pList[i].z);
             zmax = std::max(zmax, pList[i].z);
         }
-        Point ta = c2 - c1, tb = c3 - c1;
+        Point ta = pList[c2] - pList[c1], tb = pList[c3] - pList[c1];
         xy = ta.x * tb.y - ta.y * tb.x;
         xz = ta.x * tb.z - ta.z * tb.x;
         yz = ta.y * tb.z - ta.z * tb.y;
         normvf = Point(yz, -xz, xy);
+        normvf /= normvf.len();
     }
 
     double dotsProduct(const Point &a, const Point &b)
@@ -155,6 +156,11 @@ namespace Equestria
         return Point(a.y * b.z - a.z * b.y,
                      -a.x * b.z + a.z * b.x,
                      a.x * b.y - a.y * b.x);
+    }
+
+    Point elemMult(const Point &a, const Point &b)
+    {
+        return Point(a.x * b.x, a.y * b.y, a.z * b.z);
     }
 
     double determinant(const Point &a, const Point &b, const Point &c)
@@ -209,29 +215,29 @@ namespace Equestria
         double txy = s.normvf.x * ret.y - s.normvf.y * ret.x,
                txz = s.normvf.x * ret.z - s.normvf.z * ret.x,
                tyz = s.normvf.y * ret.z - s.normvf.z * ret.y;
-        for (int i = 0; i < s.num - 1; ++i)
+        for (int i = 0; i < s.num; ++i)
             if (determinant(s.pList[i], s.pList[i + 1], s.normvf) +
                 (s.pList[i].x - s.pList[i + 1].x) * tyz -
                 (s.pList[i].y - s.pList[i + 1].y) * txz +
                 (s.pList[i].z - s.pList[i + 1].z) * txy < -EPS)
                 return INF;
-        if (determinant(s.pList[s.num - 1], s.pList[1], s.normvf) +
-            (s.pList[s.num - 1].x - s.pList[1].x) * tyz -
-            (s.pList[s.num - 1].y - s.pList[1].y) * txz +
-            (s.pList[s.num - 1].z - s.pList[1].z) * txy < -EPS)
+        if (determinant(s.pList[s.num - 1], s.pList[0], s.normvf) +
+            (s.pList[s.num - 1].x - s.pList[0].x) * tyz -
+            (s.pList[s.num - 1].y - s.pList[0].y) * txz +
+            (s.pList[s.num - 1].z - s.pList[0].z) * txy < -EPS)
             return INF;
 
         *p = ret;
         return t;
     }
 
-    double intersect(const Ray &ray, const polyKDTree *tree, Point *p)
+    double intersect(const Ray &ray, const polyKDTree *tree, Polygon *&p)
     {
-        /*double l = 0, r = INF;
+        double l = 0, r = INF;
         for (int i = 0; i < 3; ++i) {
             const double &di = ray.vec.value[i];
             const double &bi = ray.bgn.value[i];
-            const double &mn = bdmin[i], &mx = bdmax[i];
+            const double &mn = tree->bdmin[i], &mx = tree->bdmax[i];
             if (fabs(di) < EPS) {
                 if (bi + EPS < mn || bi - EPS > mx)
                     return INF;
@@ -239,14 +245,14 @@ namespace Equestria
             else {
                 double l2 = (mn - bi) / di, r2 = (mx - bi) / di;
                 if (l2 < r2)
-                    l = max(l, l2), r = min(r, r2);
+                    l = std::max(l, l2), r = std::min(r, r2);
                 else
-                    l = max(l, r2), r = min(r, l2);
+                    l = std::max(l, r2), r = std::min(r, l2);
                 if (l + EPS >= r)
                     return INF;
             }
-        }*/
-        typedef const double &rcd_t;
+        }
+        /*typedef const double &rcd_t;
         rcd_t dx = ray.vec.x, dy = ray.vec.y, dz = ray.vec.z;
         rcd_t bx = ray.bgn.x, by = ray.bgn.y, bz = ray.bgn.z;
         rcd_t mnx = tree->bdmin[0], mny = tree->bdmin[1], mnz = tree->bdmin[2];
@@ -289,7 +295,7 @@ namespace Equestria
             if (tx < mnx - EPS || tx > mxx + EPS || ty < mny - EPS || ty > mxy + EPS || tz < mnz - EPS || tz > mxz + EPS)
                 return INF;
         }
-calculate:
+calculate:*/
         if (tree->son[0]) { /* have 2 sons */
             int k = dcmp(ray.bgn.value[tree->split_dir], tree->split_pos);
             if (k == 0) { // ray.bgn.value[split_dir] == split_pos
@@ -297,15 +303,15 @@ calculate:
                 if (k)
                     return intersect(ray, tree->son[(k + 1) / 2], p);
                 else {
-                    Point p0, p1;
-                    double t0 = intersect(ray, tree->son[0], &p0);
-                    double t1 = intersect(ray, tree->son[1], &p1);
+                    Polygon *p0, *p1;
+                    double t0 = intersect(ray, tree->son[0], p0);
+                    double t1 = intersect(ray, tree->son[1], p1);
                     if (t0 < t1) {
-                        *p = p0;
+                        p = p0;
                         return t0;
                     }
                     else {
-                        *p = p1;
+                        p = p1;
                         return t1;
                     }
                 }
@@ -325,7 +331,7 @@ calculate:
                 double t = intersect(ray, **i, &tmp);
                 if (t < ans) {
                     ans = t;
-                    *p = tmp;
+                    p = *i;
                 }
             }
             return ans;

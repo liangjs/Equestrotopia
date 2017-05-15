@@ -1,5 +1,5 @@
-#ifndef FIRST_H
-#define FIRST_H
+#ifndef RAYTRACING_H
+#define RAYTRACING_H
 
 #define WINDOW_WIDTH 512
 #define WINDOW_HEIGHT 512

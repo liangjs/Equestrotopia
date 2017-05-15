@@ -80,6 +80,7 @@ namespace Equestria
 
     double dotsProduct(const Point &, const Point &);
     Point crossProduct(const Point &, const Point &);
+    Point elemMult(const Point &, const Point &);
     double determinant(const Point &, const Point &, const Point &);
     double calcArea(const Point &, const Point &, const Point &);
     template<class T> inline T sqr(const T &x)
@@ -94,7 +95,7 @@ namespace Equestria
     /* return INF if no intersection */
     double intersect(const Ray &ray, const Sphere &, Point *);
     double intersect(const Ray &ray, const Polygon &, Point *);
-    double intersect(const Ray &ray, const polyKDTree *, Point *p);
+    double intersect(const Ray &ray, const polyKDTree *, Polygon *&p);
 }
 
 
