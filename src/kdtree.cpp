@@ -12,8 +12,10 @@ using namespace std;
 
 namespace Equestria
 {
-    polyKDTree::polyKDTree(vpolyit _begin, vpolyit _end): begin(_begin), end(_end)
+    polyKDTree::polyKDTree(vpolyit _begin, vpolyit _end)
     {
+        poly.assign(_begin, _end);
+        vpolyit begin = poly.begin(), end = poly.end();
         for (int i = 0; i < 3; ++i)
             bdmin[i] = INF, bdmax[i] = -INF;
         for (vpolyit i = begin; i != end; ++i)
@@ -21,34 +23,32 @@ namespace Equestria
                 bdmin[j] = min(bdmin[j], (*i)->bdmin[j]);
                 bdmax[j] = max(bdmax[j], (*i)->bdmax[j]);
             }
+        son[0] = son[1] = NULL;
         if (begin + 1 == end)
-            son[0] = son[1] = NULL;
-        else {
-            vector<Polygon*> v[3];
-            int besti, bestval = end - begin, bestpos;
-            vpolyit lend, rbegin;
-            for (int i = 0; i < 3; ++i) {
-                v[i].assign(begin, end);
-                vpolyit _lend, _rbegin;
-                double posi;
-                int val = __split(v[i].begin(), v[i].end(), _lend, _rbegin, posi, i);
-                if (val < bestval) {
-                    besti = i;
-                    bestval = val;
-                    bestpos = posi;
-                    lend = _lend;
-                    rbegin = _rbegin;
-                }
-            }
-            if (bestval == end - begin)
-                son[0] = son[1] = NULL;
-            else {
-                split_dir = besti, split_pos = bestpos;
-                copy(v[besti].begin(), v[besti].end(), begin);
-                son[0] = new polyKDTree(begin, begin + (lend - v[besti].begin()));
-                son[1] = new polyKDTree(end - (v[besti].end() - rbegin), end);
+            return;
+        vector<Polygon *> v[3];
+        int besti, bestval = end - begin;
+        double bestpos;
+        vpolyit lend, rbegin;
+        for (int i = 0; i < 3; ++i) {
+            v[i].assign(begin, end);
+            vpolyit _lend, _rbegin;
+            double posi;
+            int val = __split(v[i].begin(), v[i].end(), _lend, _rbegin, posi, i);
+            if (val < bestval) {
+                besti = i;
+                bestval = val;
+                bestpos = posi;
+                lend = _lend;
+                rbegin = _rbegin;
             }
         }
+        if (bestval == end - begin)
+            return;
+        split_dir = besti, split_pos = bestpos;
+        copy(v[besti].begin(), v[besti].end(), begin);
+        son[0] = new polyKDTree(begin, begin + (lend - v[besti].begin()));
+        son[1] = new polyKDTree(end - (v[besti].end() - rbegin), end);
     }
 
     polyKDTree::~polyKDTree()
@@ -77,7 +77,7 @@ namespace Equestria
                 pos = t;
             }
         }
-        auto ord = [ = ](const Polygon * p) {return p->bdmax[splitter] <= pos ? -1 : (p->bdmin[splitter] >= pos ? 1 : 0);};
+        auto ord = [ = ](const Polygon * p) {return dcmp(p->bdmax[splitter], pos) <= 0 ? -1 : (dcmp(p->bdmin[splitter], pos) >= 0 ? 1 : 0);};
         sort(begin, end, [ & ](const Polygon * p1, const Polygon * p2) {return ord(p1) < ord(p2);});
         for (lend = begin; lend != end && ord(*lend) <= 0;)
             ++lend;

@@ -6,17 +6,17 @@
 
 namespace Equestria
 {
-
+    
     class polyKDTree
     {
     public:
         double bdmin[3], bdmax[3]; // bounding box
-        polyKDTree *son[2];
+        polyKDTree *son[2], *mson;
         int split_dir;
         double split_pos;
 
         typedef std::vector<Polygon*>::iterator vpolyit;
-        vpolyit begin, end;
+        std::vector<Polygon*> poly;
 
         polyKDTree(vpolyit begin, vpolyit end);
         ~polyKDTree();
@@ -24,7 +24,7 @@ namespace Equestria
     private:
         static int __split(vpolyit begin, vpolyit end, vpolyit &lend, vpolyit &rbegin, double &pos, int splitter);
     };
-
+    
     class ptnKDTree
     {
     public:

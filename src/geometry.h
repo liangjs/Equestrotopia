@@ -94,8 +94,8 @@ namespace Equestria
 
     /* return INF if no intersection */
     double intersect(const Ray &ray, const Sphere &, Point *);
-    double intersect(const Ray &ray, const Polygon &, Point *);
-    double intersect(const Ray &ray, const polyKDTree *, Polygon *&p);
+    double intersect(const Ray &ray, const Polygon &, Point *,double lasthit=INF);
+    double intersect(const Ray &ray, const polyKDTree *, Polygon *&p,double lasthit=INF);
 }
 
 

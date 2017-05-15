@@ -200,7 +200,7 @@ namespace Equestria
         return res;
     }
 
-    double intersect(const Ray &ray, const Polygon &s, Point *p)
+    double intersect(const Ray &ray, const Polygon &s, Point *p, double lasthit)
     {
         Point ts = ray.bgn - s.pList[s.c1];
         double k = ray.vec.x * s.yz - ray.vec.y * s.xz + ray.vec.z * s.xy,
@@ -208,31 +208,29 @@ namespace Equestria
         if (fabs(k) < EPS)
             return INF;
         double t = -b / k;
-        if (t < EPS)
+        if (t < EPS || t >= lasthit)
             return INF;
         Point ret = ray.bgn + t * ray.vec;
 
         double txy = s.normvf.x * ret.y - s.normvf.y * ret.x,
                txz = s.normvf.x * ret.z - s.normvf.z * ret.x,
                tyz = s.normvf.y * ret.z - s.normvf.z * ret.y;
-        for (int i = 0; i < s.num; ++i)
-            if (determinant(s.pList[i], s.pList[i + 1], s.normvf) +
-                (s.pList[i].x - s.pList[i + 1].x) * tyz -
-                (s.pList[i].y - s.pList[i + 1].y) * txz +
-                (s.pList[i].z - s.pList[i + 1].z) * txy < -EPS)
+        for (int i = 0; i < s.num; ++i) {
+            int ni = (i + 1) % s.num;
+            if (determinant(s.pList[i], s.pList[ni], s.normvf) +
+                (s.pList[i].x - s.pList[ni].x) * tyz -
+                (s.pList[i].y - s.pList[ni].y) * txz +
+                (s.pList[i].z - s.pList[ni].z) * txy < -EPS)
                 return INF;
-        if (determinant(s.pList[s.num - 1], s.pList[0], s.normvf) +
-            (s.pList[s.num - 1].x - s.pList[0].x) * tyz -
-            (s.pList[s.num - 1].y - s.pList[0].y) * txz +
-            (s.pList[s.num - 1].z - s.pList[0].z) * txy < -EPS)
-            return INF;
+        }
 
         *p = ret;
         return t;
     }
 
-    double intersect(const Ray &ray, const polyKDTree *tree, Polygon *&p)
+    double intersect(const Ray &ray, const polyKDTree *tree, Polygon *&p, double lasthit)
     {
+        using namespace std;
         double l = 0, r = INF;
         for (int i = 0; i < 3; ++i) {
             const double &di = ray.vec.value[i];
@@ -245,95 +243,46 @@ namespace Equestria
             else {
                 double l2 = (mn - bi) / di, r2 = (mx - bi) / di;
                 if (l2 < r2)
-                    l = std::max(l, l2), r = std::min(r, r2);
+                    l = max(l, l2), r = min(r, r2);
                 else
-                    l = std::max(l, r2), r = std::min(r, l2);
-                if (l + EPS >= r)
+                    l = max(l, r2), r = min(r, l2);
+                if (l - EPS >= r)
                     return INF;
             }
         }
-        /*typedef const double &rcd_t;
-        rcd_t dx = ray.vec.x, dy = ray.vec.y, dz = ray.vec.z;
-        rcd_t bx = ray.bgn.x, by = ray.bgn.y, bz = ray.bgn.z;
-        rcd_t mnx = tree->bdmin[0], mny = tree->bdmin[1], mnz = tree->bdmin[2];
-        rcd_t mxx = tree->bdmax[0], mxy = tree->bdmax[1], mxz = tree->bdmax[2];
-        double t;
-        if (bx < mnx) {
-            if (dx <= 0)
-                return INF;
-            t = (mnx - bx) / dx;
-        }
-        else if (bx > mxx) {
-            if (dx >= 0)
-                return INF;
-            t = (mxx - bx) / dx;
-        }
-        else if (by < mny) {
-            if (dy <= 0)
-                return INF;
-            t = (mny - by) / dy;
-        }
-        else if (by > mxy) {
-            if (dy >= 0)
-                return INF;
-            t = (mxy - by) / dy;
-        }
-        else if (bz < mnz) {
-            if (dz <= 0)
-                return INF;
-            t = (mnz - bz) / dz;
-        }
-        else if (bz > mxz) {
-            if (dz >= 0)
-                return INF;
-            t = (mxz - bz) / dz;
-        }
-        else
-            goto calculate;
-        {
-            double tx = bx + t * dx, ty = by + t * dy, tz = bz + t * dz;
-            if (tx < mnx - EPS || tx > mxx + EPS || ty < mny - EPS || ty > mxy + EPS || tz < mnz - EPS || tz > mxz + EPS)
-                return INF;
-        }
-calculate:*/
-        if (tree->son[0]) { /* have 2 sons */
+        if (l >= lasthit)
+            return INF;
+        if (tree->son[0]) { // have 2 sons
             int k = dcmp(ray.bgn.value[tree->split_dir], tree->split_pos);
-            if (k == 0) { // ray.bgn.value[split_dir] == split_pos
+            if (k == 0) // ray.bgn.value[split_dir] == split_pos
                 k = dcmp(ray.vec.value[tree->split_dir]);
-                if (k)
-                    return intersect(ray, tree->son[(k + 1) / 2], p);
-                else {
-                    Polygon *p0, *p1;
-                    double t0 = intersect(ray, tree->son[0], p0);
-                    double t1 = intersect(ray, tree->son[1], p1);
-                    if (t0 < t1) {
-                        p = p0;
-                        return t0;
-                    }
-                    else {
-                        p = p1;
-                        return t1;
-                    }
-                }
+            k = (k + 1) / 2; // -1 -> 0  0 -> 0   1 -> 1
+            Polygon *p1, *p2;
+            double t1 = intersect(ray, tree->son[k], p1, lasthit);
+            double t2 = intersect(ray, tree->son[k ^ 1], p2, min(t1, lasthit));
+            if (t1 >= lasthit && t2 >= lasthit)
+                return INF;
+            if (t1 > t2) {
+                p = p2;
+                return t2;
             }
             else {
-                k = (k + 1) / 2; // -1 -> 0   1 -> 1
-                double t = intersect(ray, tree->son[k], p);
-                if (t != INF)
-                    return t;
-                return intersect(ray, tree->son[k ^ 1], p);
+                p = p1;
+                return t1;
             }
         }
         else {
             double ans = INF;
-            for (auto i = tree->begin; i != tree->end; ++i) {
+            for (auto i = tree->poly.begin(); i != tree->poly.end(); ++i) {
                 Point tmp;
-                double t = intersect(ray, **i, &tmp);
+                double t = intersect(ray, **i, &tmp, lasthit);
                 if (t < ans) {
                     ans = t;
                     p = *i;
                 }
             }
+            if (ans >= lasthit)
+                return INF;
             return ans;
         }
     }
