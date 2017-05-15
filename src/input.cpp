@@ -7,7 +7,7 @@
 #include <iostream>
 
 namespace Equestria {
-    std::vector<Polygon> polygon;
+    std::vector<Polygon*> polygon;
     std::map<std::string, int> mtlIndex;
     std::vector<Material> material;
 
@@ -22,9 +22,11 @@ namespace Equestria {
         }
         fin.close();
         for (auto i : mtlIndex) { // read brdf
-            bool ok = BRDF::read_brdf((i.first + ".binary").c_str(), material[i.second].brdf);
-            if (!ok)
-                std::cerr << "cannot read BRDF file \"" << i.first << ".binary\"" << std::endl;
+            bool ok = BRDF::read_brdf((i.first + ".brdf").c_str(), material[i.second].brdf);
+            if (!ok) {
+                std::cerr << "cannot read BRDF file \"" << i.first << ".brdf\"" << std::endl;
+                material[i.second].brdf = NULL;
+            }
         }
     }
 
@@ -58,7 +60,7 @@ namespace Equestria {
     }
 
     void objRead(const std::string &file) {
-        std::cout << "Loading " << file << " ..." << std::endl;
+        //std::cout << "Loading " << file << " ..." << std::endl;
         std::ifstream fin(file);
         std::string line;
         std::vector<Point> vlist, vnlist, vtlist;
@@ -103,7 +105,7 @@ namespace Equestria {
                         }
                     }
                 }
-                polygon.push_back(Polygon(pl, nl, tl, material));
+                polygon.push_back(new Polygon(pl, nl, tl, material));
             }
             else if (op == "mtllib") { // external .mtl file
                 for (vsi_t i = split.begin() + 1; i != split.end(); ++i)
@@ -120,7 +122,7 @@ namespace Equestria {
     }
 
     void mtlRead(const std::string &file) {
-        std::cout << "Loading " << file << " ..." << std::endl;
+        //std::cout << "Loading " << file << " ..." << std::endl;
         std::ifstream fin(file);
         std::string line;
         Material *pm = NULL;
