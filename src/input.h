@@ -39,6 +39,7 @@ namespace Equestria
             MTL(): Tr(0), Ni(1) {}
         } mtl;
         Material(): brdf(NULL) {}
+        Point BRDF(const Point &v_in, const Point &v_out, const Point &N);
     };
     extern std::vector<Material> material;
 

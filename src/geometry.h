@@ -4,6 +4,7 @@
 #include <cmath>
 #include <vector>
 #include <iostream>
+#include <functional>
 
 namespace Equestria
 {
@@ -74,6 +75,7 @@ namespace Equestria
         Polygon(const std::vector<Point> &pl, const std::vector<Point> &nl,
                 const std::vector<Point> &tl, int lab);
         Polygon &operator= (const Polygon &p);
+        Point getNormal(const Point &p)const;
     };
 
     Point operator*(double, const Point &);

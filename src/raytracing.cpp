@@ -62,12 +62,13 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
         Material::MTL &mtl = material[p->label].mtl;
         Point pos = ray.bgn + t * ray.vec;
         double R0 = sqr((n1 - mtl.Ni) / (n1 + mtl.Ni));
-        double theta = dotsProduct(p->normvf, -ray.vec);
-        double R = R0 + (1 - R0) * pow(1 - cos(theta), 5);
+        double cos_theta = dotsProduct(p->normvf, -ray.vec);
+        double R = R0 + (1 - R0) * pow(1 - cos_theta, 5);
+        Point N = p->getNormal(pos);
         if (deep == maxdeep || dcmp(mtl.Ns, 100) < 0) { /* not specular */
             Hitpoint hit;
             hit.position = pos;
-            hit.normv = p->normvf;
+            hit.normv = N;
             hit.raydir = -ray.vec;
             hit.material = p->label;
             hit.x = pixel_x;
@@ -76,22 +77,27 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
             hit.direct = Point(0, 0, 0);
             for (auto &light : lights) {
                 Polygon *tmp;
-                double tt = intersect(Ray(light.pos, pos - light.pos), polytree, tmp);
-                double vlen = (pos - light.pos).len();
-                if (dcmp(tt, vlen) >= 0)
-                    hit.direct += 0;
+                Point L = light.pos - pos;
+                double tt = intersect(Ray(light.pos, -L), polytree, tmp);
+                double vlen = L.len();
+                if (dcmp(tt, vlen) >= 0) {
+                    L /= vlen;
+                    Point c = elemMult(light.color, material[p->label].BRDF(L, -ray.vec, N));
+                    c = elemMult(c * dotsProduct(N, L), wgt);
+                    hit.direct += c;
+                }
             }
             hits.push_back(hit);
         }
         else { /* specular */
-            Point addition = p->normvf * EPS;
-            Point dir2 = ray.vec - 2 * dotsProduct(ray.vec, p->normvf) * p->normvf;
+            Point addition = N * EPS;
+            Point dir2 = ray.vec - 2 * dotsProduct(ray.vec, N) * N;
             RayTracing(Ray(pos + addition, dir2), n1, pixel_x, pixel_y, elemMult(wgt * R, mtl.Ks), deep + 1);
-            if (fabs(mtl.Tr) > EPS) { /* transparent */
-                double tmp = 1 - sqr(n1) / sqr(mtl.Ni) * (1 - sqr(dotsProduct(ray.vec, p->normvf)));
+            if (mtl.Tr > EPS) { /* transparent */
+                double tmp = 1 - sqr(n1) / sqr(mtl.Ni) * (1 - sqr(dotsProduct(ray.vec, N)));
                 if (tmp > 0) {
-                    tmp += n1 / mtl.Ni * dotsProduct(ray.vec, p->normvf);
-                    dir2 = ray.vec * n1 / mtl.Ni - p->normvf * tmp;
+                    tmp = sqrt(tmp) + n1 / mtl.Ni * dotsProduct(ray.vec, N);
+                    dir2 = ray.vec * n1 / mtl.Ni - N * tmp;
                     RayTracing(Ray(pos + addition, dir2), mtl.Ni, pixel_x, pixel_y, elemMult(wgt * (1 - R) * mtl.Tr, mtl.Tf), deep + 1);
                 }
             }
@@ -102,7 +108,7 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
 int main(int argc, char *argv[])
 {
     if (argc == 1 || argc > 2) {
-        cout << "usage: Equestrotopia model_directory" << endl;
+        cout << "usage: raytracing model_directory" << endl;
         return -1;
     }
 

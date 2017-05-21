@@ -1,6 +1,8 @@
 #include "geometry.h"
+#include "brdf.h"
 #include "kdtree.h"
 #include "light.h"
+#include "input.h"
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -144,6 +146,16 @@ namespace Equestria
         yz = ta.y * tb.z - ta.z * tb.y;
         normvf = Point(yz, -xz, xy);
         normvf /= normvf.len();
+    }
+
+    Point Polygon::getNormal(const Point &p)const
+    {
+        double a0 = calcArea(p, pList[c2], pList[c3]);
+        double a1 = calcArea(p, pList[c3], pList[c1]);
+        double a2 = calcArea(p, pList[c1], pList[c2]);
+        Point N = normvList[c1] * a0 + normvList[c2] * a1 + normvList[c3] * a2;
+        N /= N.len();
+        return N;
     }
 
     double dotsProduct(const Point &a, const Point &b)
@@ -299,4 +311,15 @@ namespace Equestria
         }
     }
 
+    Point Material::BRDF(const Point &v_in, const Point &v_out, const Point &N)
+    {
+        double theta_in = acos(dotsProduct(v_in, N));
+        double theta_out = acos(dotsProduct(v_out, N));
+        Point v_in2 = v_in - N * cos(theta_in);
+        Point v_out2 = v_out - N * cos(theta_out);
+        double phi = acos(dotsProduct(v_in2, v_out2) / v_in2.len() / v_out2.len());
+        double r, g, b;
+        BRDF::lookup_brdf_val(brdf, theta_in, phi, theta_out, 0, r, g, b);
+        return Point(r, g, b);
+    }
 }
