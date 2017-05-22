@@ -187,7 +187,7 @@ namespace Equestria
         return crossProduct(b - a, c - b).len() / 2;
     }
 
-    double intersect(const Ray &ray, const Sphere &s, Point *p)
+    double intersect(const Ray &ray, const Sphere &s, Point *p, double lasthit)
     {
         Point t = ray.bgn - s.center;
         double b = 2 * dotsProduct(t, ray.vec),
@@ -208,6 +208,8 @@ namespace Equestria
             res = t1;
         else
             res = std::min(t1, t2);
+        if (res >= lasthit) 
+            return INF;
         *p = ray.bgn + res * ray.vec;
         return res;
     }
