@@ -10,106 +10,86 @@
 #include <cstring>
 #include <stdexcept>
 
-namespace Equestria
-{
-    Point::Point(double tx, double ty, double tz)
-    {
+namespace Equestria {
+    Point::Point(double tx, double ty, double tz) {
         value[0] = tx;
         value[1] = ty;
         value[2] = tz;
     }
-    Point::Point(const Point &a)
-    {
+    Point::Point(const Point& a) {
         memcpy(value, a.value, sizeof(value));
     }
-    Point Point::operator+(const Point &a) const
-    {
+    Point Point::operator+(const Point& a) const {
         return Point(x + a.x, y + a.y, z + a.z);
     }
-    Point &Point::operator+=(const Point &a)
-    {
+    Point& Point::operator+=(const Point& a) {
         x += a.x;
         y += a.y;
         z += a.z;
         return *this;
     }
-    Point Point::operator-(const Point &a) const
-    {
+    Point Point::operator-(const Point& a) const {
         return Point(x - a.x, y - a.y, z - a.z);
     }
-    Point &Point::operator-=(const Point &a)
-    {
+    Point& Point::operator-=(const Point& a) {
         x -= a.x;
         y -= a.y;
         z -= a.z;
         return *this;
     }
-    Point Point::operator-() const
-    {
+    Point Point::operator-() const {
         return Point(-x, -y, -z);
     }
-    Point Point::operator*(double k) const
-    {
+    Point Point::operator*(double k) const {
         return Point(k * x, k * y, k * z);
     }
-    Point &Point::operator*=(double k)
-    {
+    Point& Point::operator*=(double k) {
         x *= k;
         y *= k;
         z *= k;
         return *this;
     }
-    Point operator*(double k, const Point &a)
-    {
+    Point operator*(double k, const Point& a) {
         return a * k;
     }
-    Point Point::operator/(double k) const
-    {
+    Point Point::operator/(double k) const {
         return Point(x / k, y / k, z / k);
     }
-    Point &Point::operator/=(double k)
-    {
+    Point& Point::operator/=(double k) {
         x /= k;
         y /= k;
         z /= k;
         return *this;
     }
-    Point &Point::operator=(const Point &x)
-    {
+    Point& Point::operator=(const Point& x) {
         memcpy(value, x.value, sizeof(value));
         return *this;
     }
-    double Point::len2() const
-    {
+    double Point::len2() const {
         return sqr(x) + sqr(y) + sqr(z);
     }
-    double Point::len() const
-    {
+    double Point::len() const {
         return sqrt(len2());
     }
-    std::ostream &operator<< (std::ostream &os, Point &p)
-    {
+    std::ostream& operator<< (std::ostream& os, const Point& p) {
         return os << p.x << ' ' << p.y << ' ' << p.z;
     }
-    std::istream &operator>> (std::istream &is, Point &p)
-    {
+    std::istream& operator>> (std::istream& is, const Point& p) {
         return is >> p.x >> p.y >> p.z;
     }
 
     Sphere::Sphere(): center(), radius(0) {}
-    Sphere::Sphere(const Point &a, double r): center(a), radius(r) {}
+    Sphere::Sphere(const Point& a, double r): center(a), radius(r) {}
     Sphere::Sphere(double ox, double oy, double oz, double r): center(ox, oy, oz), radius(r) {}
 
-    Polygon::Polygon(const Polygon &p): num(p.num), label(p.label), normvf(p.normvf), pList(p.pList), normvList(p.normvList), texList(p.texList)
-    {
+    Polygon::Polygon(const Polygon& p): num(p.num), label(p.label), normvf(p.normvf), pList(p.pList), normvList(p.normvList), texList(p.texList) {
         memcpy(bdmin, p.bdmin, sizeof(bdmin));
         memcpy(bdmax, p.bdmax, sizeof(bdmax));
         c1 = p.c1, c2 = p.c2, c3 = p.c3;
         xy = p.xy, xz = p.xz, yz = p.yz;
     }
 
-    Polygon &Polygon::operator= (const Polygon &p)
-    {
+    Polygon& Polygon::operator= (const Polygon& p) {
         num = p.num, label = p.label;
         memcpy(bdmin, p.bdmin, sizeof(bdmin));
         memcpy(bdmax, p.bdmax, sizeof(bdmax));
@@ -120,10 +100,9 @@ namespace Equestria
         return *this;
     }
 
-    Polygon::Polygon(const std::vector<Point> &pl, const std::vector<Point> &nl,
-                     const std::vector<Point> &tl, int lab)
-        : pList(pl), normvList(nl), texList(tl), num(pl.size()), label(lab)
-    {
+    Polygon::Polygon(const std::vector<Point>& pl, const std::vector<Point>& nl,
+                     const std::vector<Point>& tl, int lab)
+        : pList(pl), normvList(nl), texList(tl), num(pl.size()), label(lab) {
         xmin = ymin = zmin = INF;
         xmax = ymax = zmax = -INF;
         double s = 0;
@@ -149,8 +128,7 @@ namespace Equestria
         normvf /= normvf.len();
     }
 
-    Point Polygon::getNormal(const Point &p)const
-    {
+    Point Polygon::getNormal(const Point& p)const {
         double a0 = calcArea(p, pList[c2], pList[c3]);
         double a1 = calcArea(p, pList[c3], pList[c1]);
         double a2 = calcArea(p, pList[c1], pList[c2]);
@@ -159,37 +137,31 @@ namespace Equestria
         return N;
     }
 
-    double dotsProduct(const Point &a, const Point &b)
-    {
+    double dotsProduct(const Point& a, const Point& b) {
         return a.x * b.x + a.y * b.y + a.z * b.z;
     }
 
-    Point crossProduct(const Point &a, const Point &b)
-    {
+    Point crossProduct(const Point& a, const Point& b) {
         return Point(a.y * b.z - a.z * b.y,
                      -a.x * b.z + a.z * b.x,
                      a.x * b.y - a.y * b.x);
     }
 
-    Point elemMult(const Point &a, const Point &b)
-    {
+    Point elemMult(const Point& a, const Point& b) {
         return Point(a.x * b.x, a.y * b.y, a.z * b.z);
     }
 
-    double determinant(const Point &a, const Point &b, const Point &c)
-    {
+    double determinant(const Point& a, const Point& b, const Point& c) {
         return a.x * b.y * c.z - a.x * b.z * c.y +
                a.y * b.z * c.x - a.y * b.x * c.z +
                a.z * b.x * c.y - a.z * b.y * c.x;
     }
 
-    double calcArea(const Point &a, const Point &b, const Point &c)
-    {
+    double calcArea(const Point& a, const Point& b, const Point& c) {
         return crossProduct(b - a, c - b).len() / 2;
     }
 
-    double intersect(const Ray &ray, const Sphere &s, Point *p)
-    {
+    double intersect(const Ray& ray, const Sphere& s, Point* p, double lasthit) {
         Point t = ray.bgn - s.center;
         double b = 2 * dotsProduct(t, ray.vec),
                c = t.len2() - sqr(s.radius),
@@ -209,12 +181,13 @@ namespace Equestria
             res = t1;
         else
             res = std::min(t1, t2);
+        if (res >= lasthit)
+            return INF;
         *p = ray.bgn + res * ray.vec;
         return res;
     }
 
-    double intersect(const Ray &ray, const Polygon &s, Point *p, double lasthit)
-    {
+    double intersect(const Ray& ray, const Polygon& s, Point* p, double lasthit) {
         Point ts = ray.bgn - s.pList[s.c1];
         double k = ray.vec.x * s.yz - ray.vec.y * s.xz + ray.vec.z * s.xy,
                b = ts.x * s.yz - ts.y * s.xz + ts.z * s.xy;
@@ -231,9 +204,9 @@ namespace Equestria
         for (int i = 0; i < s.num; ++i) {
             int ni = (i + 1) % s.num;
             if (determinant(s.pList[i], s.pList[ni], s.normvf) +
-                (s.pList[i].x - s.pList[ni].x) * tyz -
-                (s.pList[i].y - s.pList[ni].y) * txz +
-                (s.pList[i].z - s.pList[ni].z) * txy < -EPS)
+                    (s.pList[i].x - s.pList[ni].x) * tyz -
+                    (s.pList[i].y - s.pList[ni].y) * txz +
+                    (s.pList[i].z - s.pList[ni].z) * txy < -EPS)
                 return INF;
         }
 
@@ -241,21 +214,19 @@ namespace Equestria
         return t;
     }
 
-    double intersect(const Ray &ray, const polyKDTree *tree, Polygon *&p, double lasthit)
-    {
+    double intersect(const Ray& ray, const polyKDTree* tree, Polygon*& p, double lasthit) {
         using namespace std;
         if (tree == NULL)
             return INF;
         double l = 0, r = INF;
         for (int i = 0; i < 3; ++i) {
-            const double &di = ray.vec.value[i];
-            const double &bi = ray.bgn.value[i];
-            const double &mn = tree->bdmin[i], &mx = tree->bdmax[i];
+            const double& di = ray.vec.value[i];
+            const double& bi = ray.bgn.value[i];
+            const double& mn = tree->bdmin[i], &mx = tree->bdmax[i];
             if (fabs(di) < EPS) {
                 if (bi + EPS < mn || bi - EPS > mx)
                     return INF;
-            }
-            else {
+            } else {
                 double l2 = (mn - bi) / di, r2 = (mx - bi) / di;
                 if (l2 < r2)
                     l = max(l, l2), r = min(r, r2);
@@ -272,7 +243,7 @@ namespace Equestria
             if (k == 0) // ray.bgn.value[split_dir] == split_pos
                 k = dcmp(ray.vec.value[tree->split_dir]);
             k = (k + 1) / 2; // -1 -> 0  0 -> 0   1 -> 1
-            Polygon *p1, *p2, *pm;
+            Polygon* p1, *p2, *pm;
             double t1 = intersect(ray, tree->son[k], p1, lasthit);
             double tm = intersect(ray, tree->mson, pm, min(t1, lasthit));
             bool ig = t1 != INF;
@@ -290,13 +261,11 @@ namespace Equestria
             if (t1 > t2) {
                 p = p2;
                 return t2;
-            }
-            else {
+            } else {
                 p = p1;
                 return t1;
             }
-        }
-        else {
+        } else {
             double ans = INF;
             for (auto i = tree->poly.begin(); i != tree->poly.end(); ++i) {
                 Point tmp;
@@ -312,8 +281,7 @@ namespace Equestria
         }
     }
 
-    Point Material::BRDF(const Point &v_in, const Point &v_out, const Point &N)
-    {
+    Point Material::BRDF(const Point& v_in, const Point& v_out, const Point& N) {
         double theta_in = acos(dotsProduct(v_in, N));
         double theta_out = acos(dotsProduct(v_out, N));
         Point v_in2 = v_in - N * cos(theta_in);
