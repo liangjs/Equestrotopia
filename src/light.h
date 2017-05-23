@@ -1,10 +1,10 @@
 #ifndef LIGHT_H
 #define LIGHT_H
 
+#include <iostream>
 #include "geometry.h"
 
-namespace Equestria
-{
+namespace Equestria {
     struct Hitpoint {
         Point position;
         Point normv;
@@ -18,23 +18,22 @@ namespace Equestria
         Point direct; // direct light
     };
 
-    class Ray
-    {
-    public:
-        Point bgn, vec;
+    class Ray {
+        public:
+            Point bgn, vec;
 
-        Ray();
-        Ray(const Point &b, const Point &v);
-
+            Ray();
+            Ray(const Point& b, const Point& v);
+            friend std::ostream& operator<< (std::ostream&, const Ray&);
     };
 
-    class Photon
-    {
-    public:
-        Ray light;
-        Point rgb;
+    class Photon {
+        public:
+            Ray light;
+            Point rgb;
 
-        Photon(const Ray &ray, const Point &clr);
+            Photon(const Ray& ray, const Point& clr);
+            friend std::ostream& operator<< (std::ostream&, const Photon&);
     };
 
     struct Camera {
@@ -45,7 +44,7 @@ namespace Equestria
         // o ~ (height/2,width/2)
         // o-vx/2->o+vx/2 ~ (0,width/2)->(height,width/2)
         // o-vy/2->o+vy/2 ~ (height/2,0)->(height/2,width)
-        /* 
+        /*
                 |
                 |
          -------o--------> y
