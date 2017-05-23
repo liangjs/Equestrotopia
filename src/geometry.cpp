@@ -70,6 +70,12 @@ namespace Equestria {
     double Point::len() const {
         return sqrt(len2());
     }
+    void Point::normalize() {
+        double l = len();
+        x /= l;
+        y /= l;
+        z /= l;
+    }
     std::ostream& operator<< (std::ostream& os, const Point& p) {
         return os << p.x << ' ' << p.y << ' ' << p.z;
     }

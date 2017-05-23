@@ -40,6 +40,7 @@ namespace Equestria {
 
             double len() const;
             double len2() const;
+            void normalize();
             friend std::ostream& operator<< (std::ostream& os, const Point& p);
             friend std::istream& operator>> (std::istream& is, const Point& p);
     };
