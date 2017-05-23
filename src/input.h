@@ -44,6 +44,7 @@ namespace Equestria
     extern std::vector<Material> material;
 
     void readModel(const std::string &file);
+    void rotateModel(); // rotate ALL the model according to prerotate.txt
     void objRead(const std::string &file); // read obj file and save polygons to "polygon"
     void strSplit(const std::string &str, std::vector<std::string> &ans);
     void mtlRead(const std::string &file); // read mtl file and save to "material"

@@ -11,7 +11,7 @@ namespace Equestria {
     std::map<std::string, int> mtlIndex;
     std::vector<Material> material;
 
-    void readModel(const std::string &file) {
+    void readModel(const std::string& file) {
         std::ifstream fin(file);
         int num;
         fin >> num; // read obj (and load mtl file according to "mtllib" in obj)
@@ -30,6 +30,18 @@ namespace Equestria {
         }
     }
 
+    void rotateModel() {
+        FILE* rotfile = fopen("prerotate.txt", "r");
+        int flag;
+        fscanf(rotfile, "%d", &flag);
+        if (!flag) return;
+        double dr, ax, ay, az;
+        fscanf(rotfile, "%lf%lf%lf%lf", &ax, &ay, &az, &dr);
+        Point axis(ax, ay, az);
+        for (auto& p : polygon)
+            p->rotate(dr, axis);
+    }
+
     typedef std::vector<std::string>::iterator vsi_t;
 
     Point __getObjPoint(vsi_t itb, vsi_t ite) {
@@ -44,7 +56,7 @@ namespace Equestria {
         return Point(x, y, 0);
     }
 
-    void strSplit(const std::string &str, std::vector<std::string> &ans) {
+    void strSplit(const std::string& str, std::vector<std::string>& ans) {
         std::string now;
         ans.clear();
         for (auto c : str)
@@ -52,14 +64,13 @@ namespace Equestria {
                 if (!now.empty())
                     ans.push_back(now);
                 now.clear();
-            }
-            else
+            } else
                 now += c;
         if (!now.empty())
             ans.push_back(now);
     }
 
-    void objRead(const std::string &file) {
+    void objRead(const std::string& file) {
         //std::cout << "Loading " << file << " ..." << std::endl;
         std::ifstream fin(file);
         std::string line;
@@ -85,33 +96,29 @@ namespace Equestria {
             else if (op == "f") { // face
                 std::vector<Point> pl, nl, tl;
                 for (auto it = ++split.begin(); it != split.end(); ++it) {
-                    std::string &tmp = *it;
+                    std::string& tmp = *it;
                     std::string::size_type pos1 = tmp.find('/');
                     if (pos1 == std::string::npos) {
                         pl.push_back(vlist[atoi(tmp.c_str())]);
                         nl.push_back(Point());
                         tl.push_back(Point());
-                    }
-                    else {
+                    } else {
                         pl.push_back(vlist[atoi(tmp.substr(0, pos1).c_str())]);
                         std::string::size_type pos2 = tmp.find('/', pos1 + 1);
                         if (pos2 == std::string::npos) {
                             tl.push_back(vtlist[atoi(tmp.substr(pos1 + 1).c_str())]);
                             nl.push_back(Point());
-                        }
-                        else {
+                        } else {
                             tl.push_back(vtlist[atoi(tmp.substr(pos1 + 1, pos2 - pos1 - 1).c_str())]);
                             nl.push_back(vnlist[atoi(tmp.substr(pos2 + 1).c_str())]);
                         }
                     }
                 }
                 polygon.push_back(new Polygon(pl, nl, tl, material));
-            }
-            else if (op == "mtllib") { // external .mtl file
+            } else if (op == "mtllib") { // external .mtl file
                 for (vsi_t i = split.begin() + 1; i != split.end(); ++i)
                     mtlRead(*i);
-            }
-            else if (op == "usemtl") // use material
+            } else if (op == "usemtl") // use material
                 material = mtlIndex[split.back()];
             else if (op == "g" || op == "o" || op == "s")
                 ;//std::cout << "ignore operator \"" << op << "\"" << std::endl;
@@ -121,11 +128,11 @@ namespace Equestria {
         fin.close();
     }
 
-    void mtlRead(const std::string &file) {
+    void mtlRead(const std::string& file) {
         //std::cout << "Loading " << file << " ..." << std::endl;
         std::ifstream fin(file);
         std::string line;
-        Material *pm = NULL;
+        Material* pm = NULL;
         while (getline(fin, line)) {
             std::vector<std::string> split;
             strSplit(line, split);
@@ -137,8 +144,7 @@ namespace Equestria {
                 mtlIndex.insert(std::make_pair(split.back(), num));
                 material.push_back(Material());
                 pm = &material.back();
-            }
-            else if (op[0] == '#') // comment
+            } else if (op[0] == '#') // comment
                 ;
             else if (op == "Ka")
                 pm->mtl.Ka = __getObjPoint(++split.begin(), split.end());

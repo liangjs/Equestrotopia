@@ -75,6 +75,7 @@ namespace Equestria {
                     const std::vector<Point>& tl, int lab);
             Polygon& operator= (const Polygon& p);
             Point getNormal(const Point& p)const;
+            void rotate(double dr, const Point& axis);
     };
 
     Point operator*(double, const Point&);
