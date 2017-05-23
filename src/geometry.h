@@ -41,6 +41,8 @@ namespace Equestria {
             double len() const;
             double len2() const;
             void normalize();
+            void rotate(double dr, const Point& axis);
+            // http://www.zhihu.com/question/23005815
             friend std::ostream& operator<< (std::ostream& os, const Point& p);
             friend std::istream& operator>> (std::istream& is, const Point& p);
     };

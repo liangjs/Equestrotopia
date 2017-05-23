@@ -76,6 +76,22 @@ namespace Equestria {
         y /= l;
         z /= l;
     }
+    void Point::rotate(double dr, const Point& axis) {
+        double q1 = cos(dr / 2),
+               q2 = sin(dr / 2) * axis.x,
+               q3 = sin(dr / 2) * axis.y,
+               q4 = sin(dr / 2) * axis.z;
+        double tx = x, ty = y, tz = z;
+        x = (sqr(q1) + sqr(q2) - sqr(q3) 
+           - sqr(q4)) * tx + 2 * (q2 * q3 - q1 * q4) * ty 
+           + 2 * (q2 * q4 + q1 * q3) * tz;
+        y = 2 * (q2 * q3 + q1 * q4) * tx 
+           + (sqr(q1) - sqr(q2) + sqr(q3) - sqr(q4)) * ty 
+           + 2 * (q3 * q4 - q1 * q2) * tz;
+        z = 2 * (q2 * q4 - q1 * q3) * tx 
+           + 2 * (q3 * q4 + q1 * q2) * ty 
+           + (sqr(q1) - sqr(q2) - sqr(q3) + sqr(q4)) * tz;
+    }
     std::ostream& operator<< (std::ostream& os, const Point& p) {
         return os << p.x << ' ' << p.y << ' ' << p.z;
     }
