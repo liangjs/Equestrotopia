@@ -8,6 +8,7 @@
 #include <cstdlib>
 #include <algorithm>
 #include <cstring>
+#include <stdexcept>
 
 namespace Equestria
 {
@@ -321,5 +322,21 @@ namespace Equestria
         double r, g, b;
         BRDF::lookup_brdf_val(brdf, theta_in, phi, theta_out, 0, r, g, b);
         return Point(r, g, b);
+    }
+    
+    Ray reflect(const Point &p, const Point &N, const Point &I)
+    {
+        return Ray(p + N * EPS, I - 2 * dotsProduct(I, N) * N);
+    }
+
+    Ray refract(const Point &p, double n1, double n2, const Point &N, const Point &I)
+    {
+        double nn = n1 / n2;
+        double d = dotsProduct(I, N);
+        double t = 1 - nn * nn * (1 - d * d);
+        if (t < 0)
+            throw std::logic_error("tot inner refl");
+        t = nn * d + sqrt(t);
+        return Ray(p - N * EPS, nn * I - t * N);
     }
 }

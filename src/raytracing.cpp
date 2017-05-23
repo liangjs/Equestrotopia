@@ -61,10 +61,9 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
     if (t != INF) {
         Material::MTL &mtl = material[p->label].mtl;
         Point pos = ray.bgn + t * ray.vec;
-        double R0 = sqr((n1 - mtl.Ni) / (n1 + mtl.Ni));
-        double cos_theta = dotsProduct(p->normvf, -ray.vec);
-        double R = R0 + (1 - R0) * pow(1 - cos_theta, 5);
         Point N = p->getNormal(pos);
+        double R0 = sqr((n1 - mtl.Ni) / (n1 + mtl.Ni));
+        double R = R0 + (1 - R0) * pow(1 - dotsProduct(N, -ray.vec), 5);
         if (deep == maxdeep || dcmp(mtl.Ns, 100) < 0) { /* not specular */
             Hitpoint hit;
             hit.position = pos;
@@ -82,7 +81,7 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
                 double vlen = L.len();
                 if (dcmp(tt, vlen) >= 0) {
                     L /= vlen;
-                    Point c = elemMult(light.color, material[p->label].BRDF(L, -ray.vec, N));
+                    Point c = elemMult(light.color * light.power, material[p->label].BRDF(L, -ray.vec, N));
                     c = elemMult(c * dotsProduct(N, L), wgt);
                     hit.direct += c;
                 }

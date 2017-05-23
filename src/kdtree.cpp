@@ -44,14 +44,16 @@ namespace Equestria
                 rbegin = _rbegin;
             }
         }
-        if (bestval == end - begin)
+        if (bestval == poly.size())
             return;
-        split_dir = besti, split_pos = bestpos;
         copy(v[besti].begin(), v[besti].end(), begin);
         auto rb = end - (v[besti].end() - rbegin), le = begin + (lend - v[besti].begin());
+        if (le == begin || rb == end)
+            return;
         mson = build(rb, le);
         son[0] = build(begin, rb);
         son[1] = build(le, end);
+        split_dir = besti, split_pos = bestpos;
         split = true;
         //son[0] = new polyKDTree(begin, begin + (lend - v[besti].begin()));
         //son[1] = new polyKDTree(end - (v[besti].end() - rbegin), end);
