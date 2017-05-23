@@ -63,34 +63,60 @@ void build_polyKDTree() {
 
 Point buf[WINDOW_HEIGHT][WINDOW_WIDTH];
 
-void ejectphoton(const Light& light, double x, double y, double z) {
+Point getSphereRandomPoint(int flag = 0, Point* norm = NULL) {
+    // 0 : whole sphere
+    // 1 : semi-sphere
+    double theta = (rand() % 10000) / 5000.0 * M_PI;
+    double z = rand() % 10001;
+    double x = sqrt(1 - sqr(z)) * cos(theta),
+           y = sqrt(1 - sqr(z)) * sin(theta);
+    if (flag == 0)
+        (z /= 5000.0) -= 1;
+    else if (flag == 1)
+        z /= 10000.0;
+    if (!norm || flag == 0) return Point(x, y, z);
+    Point tx;
+    if (fabs(norm->x) > EPS)
+        tx = Point(-norm->y, norm->x, 0);
+    else tx = Point(0, -norm->z, norm->y);
+    tx.normalize();
+    Point ty = crossProduct(tx, *norm);
+    return z * *norm + x * tx + y * ty;
+}
+
+void ejectphoton(const Light& light, const Point& dir) {
     double n1 = 1;
-    Photon ptn(Ray(light.pos, Point(x, y, z)), light.color);
+    Photon ptn(Ray(light.pos, dir), light.color);
     for (int bounce = 0; bounce < MAXBOUNCES; ++bounce) {
         Polygon* p;
         double t = intersect(ptn.light, polytree, p);
         if (t == INF) return;
-        // need to consider the color change
         cout << ptn << endl;
         Material::MTL& mtl = material[p->label].mtl;
         Point pos = ptn.light.bgn + t * ptn.light.vec;
         Point N = p->getNormal(pos);
+        double Ni = mtl.Ni;
+        if (dotsProduct(N, -ptn.light.vec) < 0) { // inside object
+            Ni = 1;
+            N = -N;
+        }
+        // need to consider the color change
         Point addition = N * EPS;
         Point dir2 = ptn.light.vec - 2 * dotsProduct(ptn.light.vec, N) * N;
-        double R0 = sqr((n1 - mtl.Ni) / (n1 + mtl.Ni));
+        double R0 = sqr((n1 - Ni) / (n1 + Ni));
         double R = R0 + (1 - R0) * pow(1 - dotsProduct(N, -ptn.light.vec), 5);
         if ((rand() % 10001) / 10000.0 < R) { // reflected
             ptn.light.bgn = pos + addition;
-            ptn.light.vec = dir2;
+            ptn.light.vec = getSphereRandomPoint(1, &N);
         } else { // refracted or absorbed
             if (mtl.Tr > EPS) {
                 double Prefraction = mtl.Tr;
                 double Pabsorption = 1 - mtl.Tr;
-                double tmp = 1 - sqr(n1) / sqr(mtl.Ni) * (1 - sqr(dotsProduct(ptn.light.vec, N)));
+                double tmp = 1 - sqr(n1) / sqr(Ni) * (1 - sqr(dotsProduct(ptn.light.vec, N)));
                 if (tmp <= 0 || (rand() % 10001) / 10000.0 < Pabsorption)
                     return; // total reflection or absorbed
-                tmp = sqrt(tmp) + n1 / mtl.Ni * dotsProduct(ptn.light.vec, N);
-                dir2 = ptn.light.vec * n1 / mtl.Ni - N * tmp;
+                tmp = sqrt(tmp) + n1 / Ni * dotsProduct(ptn.light.vec, N);
+                dir2 = ptn.light.vec * n1 / Ni - N * tmp;
                 ptn.light.bgn = pos + addition;
                 ptn.light.vec = dir2;
             } else return; // absorbed
@@ -125,11 +151,7 @@ int main(int argc, char* argv[]) {
     for (int iteration = 0; iteration < MAXITERATION; ++iteration) {
         for (auto& curlight : lights) {
             for (int i = 0; i < PHOTONSPER * curlight.power; ++i) {
-                double theta = (rand() % 10000) / 5000.0 * M_PI;
-                double z = (rand() % 10001) / 5000.0 - 1;
-                double x = sqrt(1 - sqr(z)) * cos(theta),
-                       y = sqrt(1 - sqr(z)) * sin(theta);
-                ejectphoton(curlight, x, y, z);
+                ejectphoton(curlight, getSphereRandomPoint());
             }
         }
         printf("Iteration %d Done\n", iteration);
