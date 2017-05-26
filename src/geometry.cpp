@@ -16,67 +16,108 @@ namespace Equestria {
         value[1] = ty;
         value[2] = tz;
     }
+
     Point::Point(const Point& a) {
         memcpy(value, a.value, sizeof(value));
     }
+
     Point Point::operator+(const Point& a) const {
         return Point(x + a.x, y + a.y, z + a.z);
     }
+
     Point& Point::operator+=(const Point& a) {
         x += a.x;
         y += a.y;
         z += a.z;
         return *this;
     }
+
     Point Point::operator-(const Point& a) const {
         return Point(x - a.x, y - a.y, z - a.z);
     }
+
     Point& Point::operator-=(const Point& a) {
         x -= a.x;
         y -= a.y;
         z -= a.z;
         return *this;
     }
+
     Point Point::operator-() const {
         return Point(-x, -y, -z);
     }
+
     Point Point::operator*(double k) const {
         return Point(k * x, k * y, k * z);
     }
+
     Point& Point::operator*=(double k) {
         x *= k;
         y *= k;
         z *= k;
         return *this;
     }
+
     Point operator*(double k, const Point& a) {
         return a * k;
     }
+
     Point Point::operator/(double k) const {
         return Point(x / k, y / k, z / k);
     }
+
     Point& Point::operator/=(double k) {
         x /= k;
         y /= k;
         z /= k;
         return *this;
     }
+
     Point& Point::operator=(const Point& x) {
         memcpy(value, x.value, sizeof(value));
         return *this;
     }
+
     double Point::len2() const {
         return sqr(x) + sqr(y) + sqr(z);
     }
+
     double Point::len() const {
         return sqrt(len2());
     }
+
+    void Point::normalize() {
+        double l = len();
+        x /= l;
+        y /= l;
+        z /= l;
+    }
+
+    void Point::rotate(double dr, const Point& axis) {
+        double q1 = cos(dr / 2),
+               q2 = sin(dr / 2) * axis.x,
+               q3 = sin(dr / 2) * axis.y,
+               q4 = sin(dr / 2) * axis.z;
+        double tx = x, ty = y, tz = z;
+        x = (sqr(q1) + sqr(q2) - sqr(q3)
+             - sqr(q4)) * tx + 2 * (q2 * q3 - q1 * q4) * ty
+            + 2 * (q2 * q4 + q1 * q3) * tz;
+        y = 2 * (q2 * q3 + q1 * q4) * tx
+            + (sqr(q1) - sqr(q2) + sqr(q3) - sqr(q4)) * ty
+            + 2 * (q3 * q4 - q1 * q2) * tz;
+        z = 2 * (q2 * q4 - q1 * q3) * tx
+            + 2 * (q3 * q4 + q1 * q2) * ty
+            + (sqr(q1) - sqr(q2) - sqr(q3) + sqr(q4)) * tz;
+    }
+
     std::ostream& operator<< (std::ostream& os, const Point& p) {
         return os << p.x << ' ' << p.y << ' ' << p.z;
     }
+
     std::istream& operator>> (std::istream& is, const Point& p) {
         return is >> p.x >> p.y >> p.z;
     }
+
 
     Sphere::Sphere(): center(), radius(0) {}
     Sphere::Sphere(const Point& a, double r): center(a), radius(r) {}
@@ -135,6 +176,31 @@ namespace Equestria {
         Point N = normvList[c1] * a0 + normvList[c2] * a1 + normvList[c3] * a2;
         N /= N.len();
         return N;
+    }
+
+    void Polygon::rotate(double dr, const Point& axis) {
+        for (auto& p : pList)
+            p.rotate(dr, axis);
+        for (auto& p : normvList)
+            p.rotate(dr, axis);
+        normvf.rotate(dr, axis);
+
+        Point ta = pList[c2] - pList[c1], tb = pList[c3] - pList[c1];
+        xy = ta.x * tb.y - ta.y * tb.x;
+        xz = ta.x * tb.z - ta.z * tb.x;
+        yz = ta.y * tb.z - ta.z * tb.y;
+
+        xmin = ymin = zmin = INF;
+        xmax = ymax = zmax = -INF;
+        double s = 0;
+        for (int i = 0; i < num; ++i) {
+            xmin = std::min(xmin, pList[i].x);
+            xmax = std::max(xmax, pList[i].x);
+            ymin = std::min(ymin, pList[i].y);
+            ymax = std::max(ymax, pList[i].y);
+            zmin = std::min(zmin, pList[i].z);
+            zmax = std::max(zmax, pList[i].z);
+        }
     }
 
     double dotsProduct(const Point& a, const Point& b) {

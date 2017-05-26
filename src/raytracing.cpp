@@ -23,6 +23,7 @@ void readInput(const string &path)
     //cout << "reading input ..." << endl;
     chdir(path.c_str());
     readModel("list.txt");
+    rotateModel();
     ifstream fin("camera.txt");
     fin >> camera.focus >> camera.o >> camera.vx >> camera.vy;
     fin.close();

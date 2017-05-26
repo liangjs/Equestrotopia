@@ -40,6 +40,9 @@ namespace Equestria {
 
             double len() const;
             double len2() const;
+            void normalize();
+            void rotate(double dr, const Point& axis);
+            // http://www.zhihu.com/question/23005815
             friend std::ostream& operator<< (std::ostream& os, const Point& p);
             friend std::istream& operator>> (std::istream& is, const Point& p);
     };
@@ -72,6 +75,7 @@ namespace Equestria {
                     const std::vector<Point>& tl, int lab);
             Polygon& operator= (const Polygon& p);
             Point getNormal(const Point& p)const;
+            void rotate(double dr, const Point& axis);
     };
 
     Point operator*(double, const Point&);
