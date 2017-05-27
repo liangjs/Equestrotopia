@@ -109,6 +109,12 @@ namespace Equestria {
             + (sqr(q1) - sqr(q2) - sqr(q3) + sqr(q4)) * tz;
     }
 
+    void Point::multiByChannel(const Point& p) {
+        x *= p.x;
+        y *= p.y;
+        z *= p.z;
+    }
+
     std::ostream& operator<< (std::ostream& os, const Point& p) {
         return os << p.x << ' ' << p.y << ' ' << p.z;
     }

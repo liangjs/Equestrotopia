@@ -1,8 +1,11 @@
 #include <unistd.h>
 #include <string>
+#include <cstring>
 #include <iostream>
 #include <algorithm>
 #include <fstream>
+#include <sys/types.h>
+#include <unistd.h>
 
 #include <GL/glut.h>
 
@@ -17,6 +20,8 @@ using namespace std;
 polyKDTree* polytree;
 Camera camera;
 vector<Light> lights;
+streambuf* coutBuf = cout.rdbuf();
+int curv;
 
 void readInput(const string& path) {
     chdir(path.c_str());
@@ -91,7 +96,9 @@ void ejectphoton(const Light& light, const Point& dir) {
         Polygon* p;
         double t = intersect(ptn.light, polytree, p);
         if (t == INF) return;
-        cout << ptn << endl;
+        if (bounce)  // exclude the first hit
+            cout << ptn << endl;
+        // ptn.light.bgn  ptn.light.vec  ptn.rgb
         Material::MTL& mtl = material[p->label].mtl;
         Point pos = ptn.light.bgn + t * ptn.light.vec;
         Point N = p->getNormal(pos);
@@ -100,14 +107,15 @@ void ejectphoton(const Light& light, const Point& dir) {
             Ni = 1;
             N = -N;
         }
-        // need to consider the color change
         Point addition = N * EPS;
         Point dir2 = ptn.light.vec - 2 * dotsProduct(ptn.light.vec, N) * N;
         double R0 = sqr((n1 - Ni) / (n1 + Ni));
         double R = R0 + (1 - R0) * pow(1 - dotsProduct(N, -ptn.light.vec), 5);
         if ((rand() % 10001) / 10000.0 < R) { // reflected
             ptn.light.bgn = pos + addition;
-            ptn.light.vec = getSphereRandomPoint(1, &N);
+            Point reflectv = getSphereRandomPoint(1, &N);
+            ptn.rgb.multiByChannel(material[p->label].BRDF(ptn.light.vec, reflectv, N));
+            ptn.light.vec = reflectv;
         } else { // refracted or absorbed
             if (mtl.Tr > EPS) {
                 double Prefraction = mtl.Tr;
@@ -115,10 +123,12 @@ void ejectphoton(const Light& light, const Point& dir) {
                 double tmp = 1 - sqr(n1) / sqr(Ni) * (1 - sqr(dotsProduct(ptn.light.vec, N)));
                 if (tmp <= 0 || (rand() % 10001) / 10000.0 < Pabsorption)
                     return; // total reflection or absorbed
+                // refracted
                 tmp = sqrt(tmp) + n1 / Ni * dotsProduct(ptn.light.vec, N);
                 dir2 = ptn.light.vec * n1 / Ni - N * tmp;
                 ptn.light.bgn = pos + addition;
                 ptn.light.vec = dir2;
+                ptn.rgb.multiByChannel(mtl.Tf);
             } else return; // absorbed
         }
     }
@@ -138,10 +148,7 @@ void reshape(int w, int h) {
 }
 
 int main(int argc, char* argv[]) {
-    if (argc != 2) {
-        cout << "usage: photontracing model_directory" << endl;
-        return -1;
-    }
+    sscanf(argv[2], "%d", &curv);
 
     srand(time(0));
     readInput(argv[1]);
@@ -149,20 +156,29 @@ int main(int argc, char* argv[]) {
     build_polyKDTree();
 
     for (int iteration = 0; iteration < MAXITERATION; ++iteration) {
+        char str[100];
+        sprintf(str, "PhotonMap%d-%d.map", curv, iteration);
+        ofstream of(str);
+        cout.rdbuf(of.rdbuf());
         for (auto& curlight : lights) {
             for (int i = 0; i < PHOTONSPER * curlight.power; ++i) {
                 ejectphoton(curlight, getSphereRandomPoint());
             }
         }
-        printf("Iteration %d Done\n", iteration);
+        of.flush();
+        of.close();
+        sprintf(str, "%s , IterationDone\n", str);
+        write(STDOUT_FILENO, str, strlen(str));
     }
-
-    glutInit(&argc, argv);
-    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-    glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-    glutCreateWindow("PhotonTracing");
-    glutDisplayFunc(display);
-    glutReshapeFunc(reshape);
-    glutMainLoop();
+    cout.rdbuf(coutBuf);
+    /*
+        glutInit(&argc, argv);
+        glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+        glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
+        glutCreateWindow("PhotonTracing");
+        glutDisplayFunc(display);
+        glutReshapeFunc(reshape);
+        glutMainLoop();
+    */
     return 0;
 }

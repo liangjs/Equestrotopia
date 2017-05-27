@@ -14,12 +14,13 @@ using namespace std;
 
 const double antiAliasMatrix[SAMPLE_RATE][SAMPLE_RATE] = {{0.0625, 0.125, 0.0625}, {0.125, 0.25, 0.125}, {0.0625, 0.125, 0.0625}};
 
-polyKDTree *polytree;
+polyKDTree* polytree;
 Camera camera;
 vector<Light> lights;
+streambuf* coutBuf = cout.rdbuf();
+std::vector<Hitpoint> hits;
 
-void readInput(const string &path)
-{
+void readInput(const string& path) {
     //cout << "reading input ..." << endl;
     chdir(path.c_str());
     readModel("list.txt");
@@ -44,23 +45,19 @@ void readInput(const string &path)
     chdir("..");
 }
 
-void build_polyKDTree()
-{
+void build_polyKDTree() {
     //cout << "building polygon kd-tree ..." << endl;
     polytree = new polyKDTree(polygon.begin(), polygon.end());
 }
 
-std::vector<Hitpoint> hits;
-
-void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point &wgt, int deep = 0)
-{
+void RayTracing(const Ray& ray, double n1, int pixel_x, int pixel_y, const Point& wgt, int deep = 0) {
     static const int maxdeep = 3;
     if (wgt.len() < 1e-4)
         return;
-    Polygon *p;
+    Polygon* p;
     double t = intersect(ray, polytree, p);
     if (t != INF) {
-        Material::MTL &mtl = material[p->label].mtl;
+        Material::MTL& mtl = material[p->label].mtl;
         Point pos = ray.bgn + t * ray.vec;
         double R0 = sqr((n1 - mtl.Ni) / (n1 + mtl.Ni));
         double cos_theta = dotsProduct(p->normvf, -ray.vec);
@@ -76,8 +73,8 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
             hit.y = pixel_y;
             hit.wgt = wgt * R;
             hit.direct = Point(0, 0, 0);
-            for (auto &light : lights) {
-                Polygon *tmp;
+            for (auto& light : lights) {
+                Polygon* tmp;
                 Point L = light.pos - pos;
                 double tt = intersect(Ray(light.pos, -L), polytree, tmp);
                 double vlen = L.len();
@@ -89,8 +86,7 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
                 }
             }
             hits.push_back(hit);
-        }
-        else { /* specular */
+        } else { /* specular */
             Point addition = N * EPS;
             Point dir2 = ray.vec - 2 * dotsProduct(ray.vec, N) * N;
             RayTracing(Ray(pos + addition, dir2), n1, pixel_x, pixel_y, elemMult(wgt * R, mtl.Ks), deep + 1);
@@ -106,8 +102,7 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
     }
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char* argv[]) {
     if (argc == 1 || argc > 2) {
         cout << "usage: raytracing model_directory" << endl;
         return -1;
@@ -130,8 +125,10 @@ int main(int argc, char *argv[])
                 }
         }
 
+    ofstream of("hitpoints.txt");
+    cout.rdbuf(of.rdbuf());
     cout << hits.size() << endl;
-    for (auto &i : hits) {
+    for (auto& i : hits) {
         cout << i.position << endl;
         cout << i.normv << endl;
         cout << i.material << endl;
@@ -139,5 +136,8 @@ int main(int argc, char *argv[])
         cout << i.wgt << endl;
         cout << i.direct << endl;
     }
+    of.flush();
+    of.close();
+    cout.rdbuf(coutBuf);
     return 0;
 }
