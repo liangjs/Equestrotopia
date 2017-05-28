@@ -13,7 +13,7 @@ namespace Equestria {
         int x, y; // Pixel location
         Point wgt; // Pixel weight
         double radius;
-        int ptncount;  // Accumulated photon count
+        double ptncount;  // Accumulated photon count
         Point tau; // Accumulated reflected flux
         Point direct; // direct light
 
