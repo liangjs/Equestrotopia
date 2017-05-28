@@ -14,14 +14,17 @@
 
 #include "light.h"
 #include "input.h"
+#include "kdtree.h"
 #include "updation.h"
 
 using namespace std;
 using namespace Equestria;
 
+ptnKDTree* ptntree = NULL;
 list<string> filelist;
 vector<Hitpoint> hits;
-vector<Photon> ptns;
+vector<Photon*> ptns;
+vector<Photon*> nearptns;
 int totforks = 0;
 int fd1[2], fd2[2];
 mutex filelistlock;
@@ -71,25 +74,35 @@ void loadHitpoints() {
             >> cur.x >> cur.y
             >> cur.wgt
             >> cur.direct;
+        cur.radius = INITRADIUS;
         hits.push_back(cur);
     }
     iff.close();
     cin.rdbuf(cinBuf);
 }
 
+void clearptnlist() {
+    while (!ptns.empty()) {
+        delete ptns.back();
+        ptns.pop_back();
+    }
+}
+
 void readfile() {
     filelistlock.lock();
-    ptns.clear();
+    clearptnlist();
     const char* curfile = filelist.front().c_str();
     ifstream iff(curfile);
     cin.rdbuf(iff.rdbuf());
     filelist.pop_front();
-    Photon curptn;
-    while (cin >> curptn.light.bgn
-            >> curptn.light.vec
-            >> curptn.rgb) {
+    Photon* curptn = new Photon;
+    while (cin >> curptn->light.bgn
+            >> curptn->light.vec
+            >> curptn->rgb) {
         ptns.push_back(curptn);
+        curptn = new Photon;
     }
+    delete curptn;
     iff.close();
     cin.rdbuf(cinBuf);
     filelistlock.unlock();
@@ -97,8 +110,22 @@ void readfile() {
 
 void updateHitpoints() {
     readfile();
+    ptntree = new ptnKDTree(ptns.begin(), ptns.end());
 
+    for (auto& ht : hits)
+        if (ht.radius > EPS) {
+            nearptns.clear();
+            ptntree->find(ht, nearptns);
+            int M = nearptns.size();
+            double N = ht.ptncount;
+            ht.ptncount += ALPHA * M;
+            double ratio = ht.ptncount / (N + M);
+            ht.radius *= sqrt(ratio);
+            // dont know how to update tau...
+        }
 
+    delete ptntree;
+    ptntree = NULL;
 }
 
 int main(int argc, char* argv[]) {
