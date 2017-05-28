@@ -131,6 +131,7 @@ int main(int argc, char* argv[]) {
     for (auto& i : hits) {
         cout << i.position << endl;
         cout << i.normv << endl;
+        cout << i.raydir << endl;
         cout << i.material << endl;
         cout << i.x << ' ' << i.y << endl;
         cout << i.wgt << endl;

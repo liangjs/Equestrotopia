@@ -19,8 +19,9 @@
 using namespace std;
 using namespace Equestria;
 
-list<FILE*> filelist;
+list<string> filelist;
 vector<Hitpoint> hits;
+vector<Photon> ptns;
 int totforks = 0;
 int fd1[2], fd2[2];
 mutex filelistlock;
@@ -33,6 +34,12 @@ void sig_pipe(int signo) {
     exit(1);
 }
 
+void pushFile(const char* str) {
+    filelistlock.lock();
+    filelist.push_back(str);
+    filelistlock.unlock();
+}
+
 void listenTerminal() {
     char line[MAXNLINE];
     int n;
@@ -43,9 +50,8 @@ void listenTerminal() {
         }
         char str[100];
         sscanf(line, "%s", str);
-        filelistlock.lock();
-        filelist.push_back(fopen(str, "r"));
-        filelistlock.unlock();
+        thread th(pushFile, str);
+        th.detach();
     }
     if (ferror(stdin))
         cerr << "fgets error on stdin" << endl;
@@ -53,15 +59,15 @@ void listenTerminal() {
 }
 
 void loadHitpoints() {
-    FILE* input = fopen("hitpoints.txt", "r");
     ifstream iff("hitpoints.txt");
     cin.rdbuf(iff.rdbuf());
     int n;
-    fscanf(input, "%d", &n);
+    cin >> n;
     for (int i = 0; i < n; ++i) {
         Hitpoint cur;
         cin >> cur.position >> cur.normv
             >> cur.material
+            >> cur.raydir
             >> cur.x >> cur.y
             >> cur.wgt
             >> cur.direct;
@@ -69,10 +75,29 @@ void loadHitpoints() {
     }
     iff.close();
     cin.rdbuf(cinBuf);
-    fclose(input);
+}
+
+void readfile() {
+    filelistlock.lock();
+    ptns.clear();
+    const char* curfile = filelist.front().c_str();
+    ifstream iff(curfile);
+    cin.rdbuf(iff.rdbuf());
+    filelist.pop_front();
+    Photon curptn;
+    while (cin >> curptn.light.bgn
+            >> curptn.light.vec
+            >> curptn.rgb) {
+        ptns.push_back(curptn);
+    }
+    iff.close();
+    cin.rdbuf(cinBuf);
+    filelistlock.unlock();
 }
 
 void updateHitpoints() {
+    readfile();
+
 
 }
 
