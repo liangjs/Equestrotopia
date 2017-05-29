@@ -6,13 +6,12 @@
 #include <string>
 #include "geometry.h"
 
-namespace Equestria
-{
+namespace Equestria {
     extern std::vector<Polygon*> polygon;
     extern std::map<std::string, int> mtlIndex;
 
     struct Material {
-        double *brdf;
+        double* brdf;
         struct MTL {
             Point Ka; // ambient
             Point Kd; // diffuse
@@ -39,15 +38,15 @@ namespace Equestria
             MTL(): Tr(0), Ni(1) {}
         } mtl;
         Material(): brdf(NULL) {}
-        Point BRDF(const Point &v_in, const Point &v_out, const Point &N);
+        Point BRDF(const Point& v_in, const Point& v_out, const Point& N);
     };
     extern std::vector<Material> material;
 
-    void readModel(const std::string &file);
+    void readModel(const std::string& file);
     void rotateModel(); // rotate ALL the model according to prerotate.txt
-    void objRead(const std::string &file); // read obj file and save polygons to "polygon"
-    void strSplit(const std::string &str, std::vector<std::string> &ans);
-    void mtlRead(const std::string &file); // read mtl file and save to "material"
+    void objRead(const std::string& file); // read obj file and save polygons to "polygon"
+    void strSplit(const std::string& str, std::vector<std::string>& ans);
+    void mtlRead(const std::string& file); // read mtl file and save to "material"
 }
 
 #endif

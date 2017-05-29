@@ -13,9 +13,11 @@ namespace Equestria {
         int x, y; // Pixel location
         Point wgt; // Pixel weight
         double radius;
-        int ptncount;  // Accumulated photon count
+        double ptncount;  // Accumulated photon count
         Point tau; // Accumulated reflected flux
         Point direct; // direct light
+
+        Hitpoint();
     };
 
     class Ray {
@@ -32,6 +34,7 @@ namespace Equestria {
             Ray light;
             Point rgb;
 
+            Photon();
             Photon(const Ray& ray, const Point& clr);
             friend std::ostream& operator<< (std::ostream&, const Photon&);
     };
