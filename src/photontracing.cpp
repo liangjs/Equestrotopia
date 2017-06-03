@@ -17,58 +17,44 @@
 using namespace Equestria;
 using namespace std;
 
-polyKDTree* polytree;
+polyKDTree *polytree;
 Camera camera;
 vector<Light> lights;
-streambuf* coutBuf = cout.rdbuf();
+streambuf *coutBuf = cout.rdbuf();
 int curv;
 
-void readInput(const string& path) {
+void readInput(const string &path)
+{
     chdir(path.c_str());
     readModel("list.txt");
+    rotateModel("prerotate.txt");
+    ifstream fin("camera.txt");
+    fin >> camera.focus >> camera.o >> camera.vx >> camera.vy;
+    fin.close();
+    fin.open("light.txt");
+    int nlight;
+    fin >> nlight;
+    lights.resize(nlight);
+    double powersum = 0;
+    for (int i = 0; i < nlight; ++i) {
+        fin >> lights[i].pos >> lights[i].color >> lights[i].power;
+        powersum += lights[i].power;
+    }
+    for (int i = 0; i < nlight; ++i)
+        lights[i].power /= powersum;
+    fin.close();
+    camera.normal = camera.o - camera.focus;
+    camera.normal /= camera.normal.len();
     chdir("..");
 }
 
-void placeCameraAndLight() {
-    double bdmin[3], bdmax[3];
-    for (int i = 0; i < 3; ++i)
-        bdmin[i] = INF, bdmax[i] = -INF;
-    for (auto& i : polygon)
-        for (int j = 0; j < 3; ++j) {
-            bdmin[j] = min(bdmin[j], i->bdmin[j]);
-            bdmax[j] = max(bdmax[j], i->bdmax[j]);
-        }
-
-    camera.o.value[0] = (bdmin[0] + bdmax[0]) / 2;
-    camera.o.value[1] = (bdmin[1] + bdmax[1]) / 2;
-    camera.o.value[2] = 2 * bdmax[2] - bdmin[2];
-    camera.vx = Point(0, (bdmax[1] - bdmin[1]) / 10, 0);
-    camera.vy = Point((bdmax[0] - bdmin[0]) / 10, 0, 0);
-    double lvx = camera.vx.len(), lvy = camera.vy.len();
-    if (lvx * WINDOW_WIDTH < lvy * WINDOW_HEIGHT / WINDOW_WIDTH)
-        camera.vx *= lvy / lvx * WINDOW_HEIGHT / WINDOW_WIDTH;
-    else
-        camera.vy *= lvx / lvy * WINDOW_WIDTH / WINDOW_HEIGHT;
-    camera.focus = camera.o;
-    camera.focus.z += .11 * (bdmax[2] - bdmin[2]);
-    camera.normal = camera.o - camera.focus;
-    camera.normal /= camera.normal.len();
-
-    Light l0;
-    l0.pos = camera.focus;
-    l0.pos.y -= (bdmax[1] - bdmin[1]) * 0.1;
-    l0.color = Point(1, 1, 1);
-    l0.power = 1;
-    lights.push_back(l0);
-}
-
-void build_polyKDTree() {
+void build_polyKDTree()
+{
     polytree = new polyKDTree(polygon.begin(), polygon.end());
 }
 
-Point buf[WINDOW_HEIGHT][WINDOW_WIDTH];
-
-Point getSphereRandomPoint(int flag = 0, Point* norm = NULL) {
+Point getSphereRandomPoint(int flag = 0, Point *norm = NULL)
+{
     // 0 : whole sphere
     // 1 : semi-sphere
     double theta = (rand() % 10000) / 5000.0 * M_PI;
@@ -79,28 +65,31 @@ Point getSphereRandomPoint(int flag = 0, Point* norm = NULL) {
         (z /= 5000.0) -= 1;
     else if (flag == 1)
         z /= 10000.0;
-    if (!norm || flag == 0) return Point(x, y, z);
+    if (!norm || flag == 0)
+        return Point(x, y, z);
     Point tx;
     if (fabs(norm->x) > EPS)
         tx = Point(-norm->y, norm->x, 0);
-    else tx = Point(0, -norm->z, norm->y);
+    else
+        tx = Point(0, -norm->z, norm->y);
     tx.normalize();
     Point ty = crossProduct(tx, *norm);
     return z * *norm + x * tx + y * ty;
 }
 
-void ejectphoton(const Light& light, const Point& dir) {
+void ejectphoton(const Light &light, const Point &dir)
+{
     double n1 = 1;
     Photon ptn(Ray(light.pos, dir), light.color);
-    for (int bounce = 0; bounce < MAXBOUNCES; ++bounce) {
-        Polygon* p;
+    for (int bounce = 0; bounce < MAXBOUNCES && ptn.rgb.len() > EPS; ++bounce) {
+        Polygon *p;
         double t = intersect(ptn.light, polytree, p);
-        if (t == INF) return;
-        if (bounce)  // exclude the first hit
-            cout << ptn << endl;
-        // ptn.light.bgn  ptn.light.vec  ptn.rgb
-        Material::MTL& mtl = material[p->label].mtl;
+        if (t == INF)
+            return;
         Point pos = ptn.light.bgn + t * ptn.light.vec;
+        if (bounce)  // exclude the first hit
+            cout << ptn.light << ' ' << pos << endl;
+        Material::MTL &mtl = material[p->label].mtl;
         Point N = p->getNormal(pos);
         double Ni = mtl.Ni;
         if (dotsProduct(N, -ptn.light.vec) < 0) { // inside object
@@ -116,43 +105,33 @@ void ejectphoton(const Light& light, const Point& dir) {
             Point reflectv = getSphereRandomPoint(1, &N);
             ptn.rgb.multiByChannel(material[p->label].BRDF(ptn.light.vec, reflectv, N));
             ptn.light.vec = reflectv;
-        } else { // refracted or absorbed
+        }
+        else {   // refracted or absorbed
             if (mtl.Tr > EPS) {
                 double Prefraction = mtl.Tr;
                 double Pabsorption = 1 - mtl.Tr;
-                double tmp = 1 - sqr(n1) / sqr(Ni) * (1 - sqr(dotsProduct(ptn.light.vec, N)));
-                if (tmp <= 0 || (rand() % 10001) / 10000.0 < Pabsorption)
-                    return; // total reflection or absorbed
-                // refracted
-                tmp = sqrt(tmp) + n1 / Ni * dotsProduct(ptn.light.vec, N);
-                dir2 = ptn.light.vec * n1 / Ni - N * tmp;
-                ptn.light.bgn = pos + addition;
-                ptn.light.vec = dir2;
-                ptn.rgb.multiByChannel(mtl.Tf);
-            } else return; // absorbed
+                if ((rand() % 10001) / 10000.0 < Pabsorption)
+                    return; // absorbed
+                try {
+                    ptn.light = refract(pos, n1, Ni, N, ptn.light.vec);
+                    ptn.rgb.multiByChannel(mtl.Tf);
+                }
+                catch (std::logic_error) {
+                    return; // total inner reflect
+                }
+            }
+            else
+                return; // absorbed
         }
     }
 }
 
-unsigned char pixels[WINDOW_HEIGHT * WINDOW_WIDTH * 3];
-
-void display() {
-    glClear(GL_COLOR_BUFFER_BIT);
-    glDrawPixels(WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE, pixels);
-    glFlush();
-    glutSwapBuffers();
-}
-
-void reshape(int w, int h) {
-    glViewport(0, 0, w, h);
-}
-
-int main(int argc, char* argv[]) {
+int main(int argc, char *argv[])
+{
     sscanf(argv[2], "%d", &curv);
 
     srand(time(0));
     readInput(argv[1]);
-    placeCameraAndLight();
     build_polyKDTree();
 
     for (int iteration = 0; iteration < MAXITERATION; ++iteration) {
@@ -160,25 +139,15 @@ int main(int argc, char* argv[]) {
         sprintf(str, "PhotonMap%d-%d.map", curv, iteration);
         ofstream of(str);
         cout.rdbuf(of.rdbuf());
-        for (auto& curlight : lights) {
+        for (auto &curlight : lights) {
             for (int i = 0; i < PHOTONSPER * curlight.power; ++i) {
                 ejectphoton(curlight, getSphereRandomPoint());
             }
         }
-        of.flush();
         of.close();
-        sprintf(str, "%s , IterationDone\n", str);
+        strcat(str, " , IterationDone\n");
         write(STDOUT_FILENO, str, strlen(str));
     }
     cout.rdbuf(coutBuf);
-    /*
-        glutInit(&argc, argv);
-        glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
-        glutInitWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
-        glutCreateWindow("PhotonTracing");
-        glutDisplayFunc(display);
-        glutReshapeFunc(reshape);
-        glutMainLoop();
-    */
     return 0;
 }

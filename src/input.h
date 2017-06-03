@@ -5,13 +5,15 @@
 #include <map>
 #include <string>
 #include "geometry.h"
+#include "texture.h"
 
-namespace Equestria {
-    extern std::vector<Polygon*> polygon;
+namespace Equestria
+{
+    extern std::vector<Polygon *> polygon;
     extern std::map<std::string, int> mtlIndex;
 
     struct Material {
-        double* brdf;
+        double *brdf;
         struct MTL {
             Point Ka; // ambient
             Point Kd; // diffuse
@@ -31,22 +33,30 @@ namespace Equestria {
                           8. Reflection on and Ray trace off
                           9. Transparency: Glass on, Reflection: Ray trace off
                           10. Casts shadows onto invisible surfaces */
-            std::string mapKa; // ambient texture map
-            std::string mapKd; // diffuse texture map, most of time be the same as mapKa
-            std::string mapKs; // specular color texture map
-            std::string mapBump; // bump map (which by default uses luminance channel of the image)
+            int mapKa = -1; // ambient texture map
+            int mapKd = -1; // diffuse texture map, most of time be the same as mapKa
+            int mapKs = -1; // specular color texture map
+            //std::string mapBump; // bump map (which by default uses luminance channel of the image)
             MTL(): Tr(0), Ni(1) {}
+            Point getKa(double u = 0, double v = 0);
+            Point getKd(double u = 0, double v = 0);
+            Point getKs(double u = 0, double v = 0);
         } mtl;
         Material(): brdf(NULL) {}
-        Point BRDF(const Point& v_in, const Point& v_out, const Point& N);
+        Point BRDF(const Point &v_in, const Point &v_out, const Point &N);
     };
     extern std::vector<Material> material;
 
-    void readModel(const std::string& file);
-    void rotateModel(); // rotate ALL the model according to prerotate.txt
-    void objRead(const std::string& file); // read obj file and save polygons to "polygon"
-    void strSplit(const std::string& str, std::vector<std::string>& ans);
-    void mtlRead(const std::string& file); // read mtl file and save to "material"
+    void readModel(const std::string &file);
+    void objRead(const std::string &file); // read obj file and save polygons to "polygon"
+    void strSplit(const std::string &str, std::vector<std::string> &ans);
+    void mtlRead(const std::string &file); // read mtl file and save to "material"
+
+    extern std::map<std::string, int> txIdx;
+    extern std::vector<Texture> texture;
+    void readTexture(const std::string &file);
+
+    void rotateModel(const std::string &fname); // rotate ALL the model according to prerotate.txt
 }
 
 #endif

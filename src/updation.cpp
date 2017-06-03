@@ -56,8 +56,6 @@ void listenTerminal() {
         thread th(pushFile, str);
         th.detach();
     }
-    if (ferror(stdin))
-        cerr << "fgets error on stdin" << endl;
     endflag = true;
 }
 

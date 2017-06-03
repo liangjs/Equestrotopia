@@ -77,6 +77,8 @@ namespace Equestria {
             Polygon& operator= (const Polygon& p);
             Point getNormal(const Point& p)const;
             void rotate(double dr, const Point& axis);
+            void txCoordinate(const Point &p, double &u, double &v)const;
+            double SignedArea(const Point &p1, const Point &p2)const;
     };
 
     Point operator*(double, const Point&);

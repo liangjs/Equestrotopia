@@ -36,7 +36,7 @@ namespace Equestria {
 
             Photon();
             Photon(const Ray& ray, const Point& clr);
-            friend std::ostream& operator<< (std::ostream&, const Photon&);
+            //friend std::ostream& operator<< (std::ostream&, const Photon&);
     };
 
     struct Camera {
