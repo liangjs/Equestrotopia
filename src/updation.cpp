@@ -46,16 +46,9 @@ void pushFile(const char* str) {
 void listenTerminal() {
     char line[MAXNLINE];
     int n;
-    while ((n = read(fd2[0], line, MAXNLINE)) >= 0) {
-        if (n == 0) {
-            printf("child closed pipe\n");
-            break;
-        }
-        char str[100];
-        sscanf(line, "%s", str);
-        thread th(pushFile, str);
-        th.detach();
-    }
+    FILE *file = fdopen(fd2[0], "r");
+    while (fscanf(file, "%s", line) != EOF)
+        pushFile(line);
     endflag = true;
 }
 

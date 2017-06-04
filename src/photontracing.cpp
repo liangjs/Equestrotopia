@@ -31,6 +31,8 @@ void readInput(const string &path)
     ifstream fin("camera.txt");
     fin >> camera.focus >> camera.o >> camera.vx >> camera.vy;
     fin.close();
+    camera.normal = camera.o - camera.focus;
+    camera.normal /= camera.normal.len();
     fin.open("light.txt");
     int nlight;
     fin >> nlight;
@@ -43,8 +45,6 @@ void readInput(const string &path)
     for (int i = 0; i < nlight; ++i)
         lights[i].power /= powersum;
     fin.close();
-    camera.normal = camera.o - camera.focus;
-    camera.normal /= camera.normal.len();
     chdir("..");
 }
 
@@ -100,10 +100,14 @@ void ejectphoton(const Light &light, const Point &dir)
         Point dir2 = ptn.light.vec - 2 * dotsProduct(ptn.light.vec, N) * N;
         double R0 = sqr((n1 - Ni) / (n1 + Ni));
         double R = R0 + (1 - R0) * pow(1 - dotsProduct(N, -ptn.light.vec), 5);
+        double u, v;
+        p->txCoordinate(pos, u, v);
         if ((rand() % 10001) / 10000.0 < R) { // reflected
             ptn.light.bgn = pos + addition;
             Point reflectv = getSphereRandomPoint(1, &N);
             ptn.rgb.multiByChannel(material[p->label].BRDF(ptn.light.vec, reflectv, N));
+            if (mtl.mapKa != -1)
+                ptn.rgb.multiByChannel(mtl.getKd(u, v));
             ptn.light.vec = reflectv;
         }
         else {   // refracted or absorbed
@@ -145,9 +149,9 @@ int main(int argc, char *argv[])
             }
         }
         of.close();
-        strcat(str, " , IterationDone\n");
-        write(STDOUT_FILENO, str, strlen(str));
+        //strcat(str, " , IterationDone\n");
+        cout.rdbuf(coutBuf);
+        puts(str);
     }
-    cout.rdbuf(coutBuf);
     return 0;
 }
