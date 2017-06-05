@@ -6,6 +6,10 @@ const int MAXFORKS = 4;
 const double INITRADIUS = 10;
 const double ALPHA = 0.65;
 
+#include "ppm.h"
+
+#define ITERATION_PER_OUTPUT 3
+
 int main(int argc, char* argv[]);
 
 #endif

@@ -12,8 +12,6 @@
 using namespace Equestria;
 using namespace std;
 
-const double antiAliasMatrix[SAMPLE_RATE][SAMPLE_RATE] = {{0.0625, 0.125, 0.0625}, {0.125, 0.25, 0.125}, {0.0625, 0.125, 0.0625}};
-
 polyKDTree *polytree;
 Camera camera;
 vector<Light> lights;
@@ -26,9 +24,13 @@ void readInput(const string &path)
     readModel("list.txt");
     rotateModel("prerotate.txt");
     ifstream fin("camera.txt");
+    if (!fin.good())
+        cerr << "camera.txt reading error" << endl;
     fin >> camera.focus >> camera.o >> camera.vx >> camera.vy;
     fin.close();
     fin.open("light.txt");
+    if (!fin.good())
+        cerr << "light.txt reading error" << endl;
     int nlight;
     fin >> nlight;
     lights.resize(nlight);
@@ -69,9 +71,11 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
         N = -N;
     }
     bool end = true;
+    double u, v;
+    p->txCoordinate(pos, u, v);
     if (deep < maxdeep) {
         if (dcmp(mtl.Ns, 100) > 0) {/* specular */
-            RayTracing(reflect(pos, N, ray.vec), n1, pixel_x, pixel_y, elemMult(wgt, mtl.Ks), deep + 1);
+            RayTracing(reflect(pos, N, ray.vec), n1, pixel_x, pixel_y, elemMult(wgt, mtl.getKs(u, v)), deep + 1);
             end = false;
         }
         if (mtl.Tr > EPS) /* transparent */
@@ -101,6 +105,8 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
             if (dcmp(tt, vlen) >= 0) {
                 L /= vlen;
                 Point c = elemMult(light.color, material[p->label].BRDF(L, -ray.vec, N));
+                if (mtl.mapKd != -1)
+                    c = elemMult(c, mtl.getKd(u, v));
                 hit.direct += c * light.power;
             }
         }

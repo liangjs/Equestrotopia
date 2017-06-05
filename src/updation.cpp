@@ -17,6 +17,8 @@
 #include "kdtree.h"
 #include "updation.h"
 
+#include "lodepng.h"
+
 using namespace std;
 using namespace Equestria;
 
@@ -31,11 +33,7 @@ mutex filelistlock;
 bool endflag = false;
 streambuf* coutBuf = cout.rdbuf();
 streambuf* cinBuf = cin.rdbuf();
-
-void sig_pipe(int signo) {
-    printf("SIGPIPE caught\n");
-    exit(1);
-}
+int Nemit = 0;
 
 void pushFile(const char* str) {
     filelistlock.lock();
@@ -46,16 +44,9 @@ void pushFile(const char* str) {
 void listenTerminal() {
     char line[MAXNLINE];
     int n;
-    while ((n = read(fd2[0], line, MAXNLINE)) >= 0) {
-        if (n == 0) {
-            printf("child closed pipe\n");
-            break;
-        }
-        char str[100];
-        sscanf(line, "%s", str);
-        thread th(pushFile, str);
-        th.detach();
-    }
+    FILE *file = fdopen(fd2[0], "r");
+    while (fscanf(file, "%s", line) != EOF)
+        pushFile(line);
     endflag = true;
 }
 
@@ -96,7 +87,8 @@ void readfile() {
     Photon* curptn = new Photon;
     while (cin >> curptn->light.bgn
             >> curptn->light.vec
-            >> curptn->rgb) {
+            >> curptn->rgb
+            >> curptn->mtl) {
         ptns.push_back(curptn);
         curptn = new Photon;
     }
@@ -119,19 +111,37 @@ void updateHitpoints() {
             ht.ptncount += ALPHA * M;
             double ratio = ht.ptncount / (N + M);
             ht.radius *= sqrt(ratio);
-            // dont know how to update tau...
+            for (auto &ptn : nearptns)
+                ht.tau += elemMult(ptn->rgb, material[ptn->mtl].BRDF(ptn->light.vec, ht.raydir, ht.normv));
+            ht.tau *= ratio;
         }
+    Nemit += ptns.size();
 
     delete ptntree;
     ptntree = NULL;
 }
 
+void putImage(int id) {
+    char str[100];
+    sprintf(str, "ppm%d.png", id);
+    std::vector<std::uint8_t> Buffer(WINDOW_WIDTH * WINDOW_HEIGHT * 4); // RGBA
+    for (auto &ht : hits) {
+        int pos = ht.x * WINDOW_WIDTH + ht.y;
+        for (int i = 0; i < 3; ++i) {
+            double tmp = ht.tau.value[i] / Nemit;
+            Buffer[pos + i] = uint8_t(255 * tmp);
+        }
+        Buffer[pos + 4] = 0;
+    }
+    std::vector<std::uint8_t> ImageBuffer;
+    lodepng::encode(ImageBuffer, Buffer, WINDOW_WIDTH, WINDOW_HEIGHT);
+    lodepng::save_file(ImageBuffer, str);
+}
+
 int main(int argc, char* argv[]) {
     pid_t pid;
 
-    if (signal(SIGPIPE, sig_pipe) == SIG_ERR)
-        cerr << "signal error" << endl;
-    if (pipe(fd1) < 0 || pipe(fd2) < 0)
+    if (pipe(fd2) < 0)
         cerr << "pipe error" << endl;
 
 GO_FORK:
@@ -146,8 +156,6 @@ GO_FORK:
     if (pid > 0) { // parent process
         if (totforks < MAXFORKS)
             goto GO_FORK;
-        close(fd1[0]);
-        close(fd1[1]);
         close(fd2[1]);
 
         filelist.clear();
@@ -158,13 +166,16 @@ GO_FORK:
         loadHitpoints();
 
         while (!endflag)
-            if (!filelist.empty())
+            if (!filelist.empty()) {
+                static int cnt = 0;
                 updateHitpoints();
+                ++cnt;
+                if (cnt % ITERATION_PER_OUTPUT)
+                    putImage(cnt / ITERATION_PER_OUTPUT);
+            }
 
         exit(0);
     } else { // child process
-        close(fd1[0]);
-        close(fd1[1]);
         close(fd2[0]);
         if (fd2[1] != STDOUT_FILENO) {
             if (dup2(fd2[1], STDOUT_FILENO) != STDOUT_FILENO)
