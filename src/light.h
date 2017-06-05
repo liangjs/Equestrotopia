@@ -33,9 +33,10 @@ namespace Equestria {
         public:
             Ray light;
             Point rgb;
+            int mtl;
 
             Photon();
-            Photon(const Ray& ray, const Point& clr);
+            Photon(const Ray& ray, const Point& clr, int mtl_label);
             //friend std::ostream& operator<< (std::ostream&, const Photon&);
     };
 

@@ -12,8 +12,6 @@
 using namespace Equestria;
 using namespace std;
 
-const double antiAliasMatrix[SAMPLE_RATE][SAMPLE_RATE] = {{0.0625, 0.125, 0.0625}, {0.125, 0.25, 0.125}, {0.0625, 0.125, 0.0625}};
-
 polyKDTree *polytree;
 Camera camera;
 vector<Light> lights;
@@ -26,9 +24,13 @@ void readInput(const string &path)
     readModel("list.txt");
     rotateModel("prerotate.txt");
     ifstream fin("camera.txt");
+    if (!fin.good())
+        cerr << "camera.txt reading error" << endl;
     fin >> camera.focus >> camera.o >> camera.vx >> camera.vy;
     fin.close();
     fin.open("light.txt");
+    if (!fin.good())
+        cerr << "light.txt reading error" << endl;
     int nlight;
     fin >> nlight;
     lights.resize(nlight);

@@ -80,35 +80,36 @@ Point getSphereRandomPoint(int flag = 0, Point *norm = NULL)
 void ejectphoton(const Light &light, const Point &dir)
 {
     double n1 = 1;
-    Photon ptn(Ray(light.pos, dir), light.color);
-    for (int bounce = 0; bounce < MAXBOUNCES && ptn.rgb.len() > EPS; ++bounce) {
+    Point rgb(light.color);
+    Ray ray(light.pos, dir);
+    for (int bounce = 0; bounce < MAXBOUNCES && rgb.len() > EPS; ++bounce) {
         Polygon *p;
-        double t = intersect(ptn.light, polytree, p);
+        double t = intersect(ray, polytree, p);
         if (t == INF)
             return;
-        Point pos = ptn.light.bgn + t * ptn.light.vec;
+        Point pos = ray.bgn + t * ray.vec;
         if (bounce)  // exclude the first hit
-            cout << ptn.light << ' ' << pos << endl;
+            cout << ray << ' ' << pos << ' ' << p->label << endl;
         Material::MTL &mtl = material[p->label].mtl;
         Point N = p->getNormal(pos);
         double Ni = mtl.Ni;
-        if (dotsProduct(N, -ptn.light.vec) < 0) { // inside object
+        if (dotsProduct(N, -ray.vec) < 0) { // inside object
             Ni = 1;
             N = -N;
         }
         Point addition = N * EPS;
-        Point dir2 = ptn.light.vec - 2 * dotsProduct(ptn.light.vec, N) * N;
+        Point dir2 = ray.vec - 2 * dotsProduct(ray.vec, N) * N;
         double R0 = sqr((n1 - Ni) / (n1 + Ni));
-        double R = R0 + (1 - R0) * pow(1 - dotsProduct(N, -ptn.light.vec), 5);
+        double R = R0 + (1 - R0) * pow(1 - dotsProduct(N, -ray.vec), 5);
         double u, v;
         p->txCoordinate(pos, u, v);
         if ((rand() % 10001) / 10000.0 < R) { // reflected
-            ptn.light.bgn = pos + addition;
+            ray.bgn = pos + addition;
             Point reflectv = getSphereRandomPoint(1, &N);
-            ptn.rgb.multiByChannel(material[p->label].BRDF(ptn.light.vec, reflectv, N));
+            rgb.multiByChannel(material[p->label].BRDF(ray.vec, reflectv, N));
             if (mtl.mapKa != -1)
-                ptn.rgb.multiByChannel(mtl.getKd(u, v));
-            ptn.light.vec = reflectv;
+                rgb.multiByChannel(mtl.getKd(u, v));
+            ray.vec = reflectv;
         }
         else {   // refracted or absorbed
             if (mtl.Tr > EPS) {
@@ -117,8 +118,8 @@ void ejectphoton(const Light &light, const Point &dir)
                 if ((rand() % 10001) / 10000.0 < Pabsorption)
                     return; // absorbed
                 try {
-                    ptn.light = refract(pos, n1, Ni, N, ptn.light.vec);
-                    ptn.rgb.multiByChannel(mtl.Tf);
+                    ray = refract(pos, n1, Ni, N, ray.vec);
+                    rgb.multiByChannel(mtl.Tf);
                 }
                 catch (std::logic_error) {
                     return; // total inner reflect
