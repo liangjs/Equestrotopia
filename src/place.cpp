@@ -39,36 +39,31 @@ void placeCameraLight()
                 bdmax[j] = max(bdmax[j], i->bdmax[j]);
             }
 
-    camera.o.value[0] = (bdmin[0] + bdmax[0]) / 2;
-    camera.o.value[1] = (bdmin[1] + bdmax[1]) / 2;
-    camera.o.value[2] = 2 * bdmin[2] - bdmax[2];
-    camera.vx = Point(0, (bdmax[1] - bdmin[1]) / 10, 0);
-    camera.vy = Point((bdmax[0] - bdmin[0]) / 10, 0, 0);
+    Point center((bdmin[0] + bdmax[0]) / 2, (bdmin[1] + bdmax[1]) / 2, (bdmin[2] + bdmax[2]) / 2);
+
+    camera.o = center;
+    camera.o.y = bdmin[1] * 0.9 + bdmin[1] * 0.1;
+    camera.vx = Point(0, 0, -(bdmax[2] - bdmin[2]) / 2);
+    camera.vy = Point((bdmax[0] - bdmin[0]) / 2, 0, 0);
     double lvx = camera.vx.len(), lvy = camera.vy.len();
     if (lvx * WINDOW_WIDTH < lvy * WINDOW_HEIGHT)
         camera.vx *= lvy / lvx * WINDOW_HEIGHT / WINDOW_WIDTH;
     else
         camera.vy *= lvx / lvy * WINDOW_WIDTH / WINDOW_HEIGHT;
-    camera.focus = camera.o;
-    camera.focus.z -= .11 * (bdmax[2] - bdmin[2]);
+    camera.focus = center;
+    camera.focus.y -= bdmax[1] - bdmin[1];
+    camera.normal = camera.o - camera.focus;
+    camera.normal /= camera.normal.len();
 
     Light l0, l1;
-    /*l0.pos.value[0] = (bdmin[0] + bdmax[0]) / 2;
-    l0.pos.value[1] = (bdmin[1] + bdmax[1]) / 2;
-    l0.pos.value[2] = 2 * bdmax[2] - bdmin[2];
-    //l0.pos.x += 0.1 * (bdmax[0] - bdmin[0]);
-    //l0.pos.y += 0.1 * (bdmax[1] - bdmin[1]);
-    l0.pos.z += 0.01 * (bdmax[2] - bdmin[2]);*/
-    l0.pos = camera.focus;
-    l0.pos.y += (bdmax[1] - bdmin[1]) * 0.25;
+    l0.pos = camera.o;
+    l0.pos.z += (bdmax[2] - bdmin[2]) / 2;
     l0.color = Point(1, 1, 1);
     l0.power = 0.5;
     lights.push_back(l0);
 
-    l1.pos.x = (bdmin[0] + bdmax[0]) / 2;
-    l1.pos.y = (bdmin[1] + bdmax[1]) / 2;
-    l1.pos.z = (bdmax[2] + bdmin[2]) / 2;
-    l1.pos.y -= bdmax[1] - bdmin[1];
+    l1.pos = center;
+    l1.pos.z += (bdmax[2] - bdmin[2]) / 2;
     l1.color = Point(1, 1, 1);
     l1.power = 0.5;
     lights.push_back(l1);

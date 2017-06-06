@@ -20,7 +20,6 @@ using namespace std;
 polyKDTree *polytree;
 Camera camera;
 vector<Light> lights;
-streambuf *coutBuf = cout.rdbuf();
 int curv;
 
 void readInput(const string &path)
@@ -45,7 +44,6 @@ void readInput(const string &path)
     for (int i = 0; i < nlight; ++i)
         lights[i].power /= powersum;
     fin.close();
-    chdir("..");
 }
 
 void build_polyKDTree()
@@ -59,12 +57,12 @@ Point getSphereRandomPoint(int flag = 0, Point *norm = NULL)
     // 1 : semi-sphere
     double theta = (rand() % 10000) / 5000.0 * M_PI;
     double z = rand() % 10001;
-    double x = sqrt(1 - sqr(z)) * cos(theta),
-           y = sqrt(1 - sqr(z)) * sin(theta);
     if (flag == 0)
         (z /= 5000.0) -= 1;
     else if (flag == 1)
         z /= 10000.0;
+    double x = sqrt(1 - sqr(z)) * cos(theta),
+           y = sqrt(1 - sqr(z)) * sin(theta);
     if (!norm || flag == 0)
         return Point(x, y, z);
     Point tx;
@@ -77,7 +75,7 @@ Point getSphereRandomPoint(int flag = 0, Point *norm = NULL)
     return z * *norm + x * tx + y * ty;
 }
 
-void ejectphoton(const Light &light, const Point &dir)
+void ejectphoton(const Light &light, const Point &dir, FILE *file)
 {
     double n1 = 1;
     Point rgb(light.color);
@@ -88,8 +86,12 @@ void ejectphoton(const Light &light, const Point &dir)
         if (t == INF)
             return;
         Point pos = ray.bgn + t * ray.vec;
-        if (bounce)  // exclude the first hit
-            cout << ray << ' ' << pos << ' ' << p->label << endl;
+        if (bounce) { // exclude the first hit
+            pos.Print(file);
+            (-ray.vec).Print(file);
+            rgb.Print(file);
+            fwrite(&p->label, 4, 1, file);
+        }
         Material::MTL &mtl = material[p->label].mtl;
         Point N = p->getNormal(pos);
         double Ni = mtl.Ni;
@@ -106,7 +108,7 @@ void ejectphoton(const Light &light, const Point &dir)
         if ((rand() % 10001) / 10000.0 < R) { // reflected
             ray.bgn = pos + addition;
             Point reflectv = getSphereRandomPoint(1, &N);
-            rgb.multiByChannel(material[p->label].BRDF(ray.vec, reflectv, N));
+            rgb.multiByChannel(material[p->label].BRDF(-ray.vec, reflectv, N));
             if (mtl.mapKa != -1)
                 rgb.multiByChannel(mtl.getKd(u, v));
             ray.vec = reflectv;
@@ -133,6 +135,11 @@ void ejectphoton(const Light &light, const Point &dir)
 
 int main(int argc, char *argv[])
 {
+    if (argc != 3)
+    {
+        printf("Usage: %s <directory> <id>\n", argv[0]);
+        return 1;
+    }
     sscanf(argv[2], "%d", &curv);
 
     srand(time(0));
@@ -142,17 +149,13 @@ int main(int argc, char *argv[])
     for (int iteration = 0; iteration < MAXITERATION; ++iteration) {
         char str[100];
         sprintf(str, "PhotonMap%d-%d.map", curv, iteration);
-        ofstream of(str);
-        cout.rdbuf(of.rdbuf());
-        for (auto &curlight : lights) {
-            for (int i = 0; i < PHOTONSPER * curlight.power; ++i) {
-                ejectphoton(curlight, getSphereRandomPoint());
-            }
-        }
-        of.close();
-        //strcat(str, " , IterationDone\n");
-        cout.rdbuf(coutBuf);
+        FILE *file = fopen(str, "w");
+        for (auto &curlight : lights)
+            for (int i = 0; i < PHOTONSPER * curlight.power; ++i)
+                ejectphoton(curlight, getSphereRandomPoint(), file);
+        fclose(file);
         puts(str);
+        fflush(stdout);
     }
     return 0;
 }

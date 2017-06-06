@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <string>
 #include <cstring>
+#include <cassert>
 #include <list>
 #include <vector>
 #include <sys/types.h>
@@ -22,97 +23,111 @@
 using namespace std;
 using namespace Equestria;
 
-ptnKDTree* ptntree = NULL;
+ptnKDTree *ptntree = NULL;
 list<string> filelist;
 vector<Hitpoint> hits;
-vector<Photon*> ptns;
-vector<Photon*> nearptns;
+vector<Photon *> ptns;
+vector<Photon *> nearptns;
 int totforks = 0;
-int fd1[2], fd2[2];
+int fd2[2];
 mutex filelistlock;
 bool endflag = false;
-streambuf* coutBuf = cout.rdbuf();
-streambuf* cinBuf = cin.rdbuf();
 int Nemit = 0;
+char cwd[1000];
 
-void pushFile(const char* str) {
+void pushFile(const char *str)
+{
     filelistlock.lock();
+    printf("pushFile %s\n", str);
     filelist.push_back(str);
     filelistlock.unlock();
 }
 
-void listenTerminal() {
+void listenTerminal()
+{
     char line[MAXNLINE];
     int n;
     FILE *file = fdopen(fd2[0], "r");
     while (fscanf(file, "%s", line) != EOF)
         pushFile(line);
+    printf("listenTerminal done\n");
     endflag = true;
 }
 
-void loadHitpoints() {
-    ifstream iff("hitpoints.txt");
-    cin.rdbuf(iff.rdbuf());
+void loadHitpoints()
+{
+    printf("loading hitpoints...\n");
+    FILE *file = fopen("hitpoints.txt", "rb");
     int n;
-    cin >> n;
+    fread(&n, 4, 1, file);
+    void *buf = malloc(132 * n), *ptr = buf;
+    assert(fread(buf, 132, n, file) == n);
+    fclose(file);
     for (int i = 0; i < n; ++i) {
         Hitpoint cur;
-        cin >> cur.position >> cur.normv
-            >> cur.material
-            >> cur.raydir
-            >> cur.x >> cur.y
-            >> cur.wgt
-            >> cur.direct;
+        cur.position.Read(ptr);
+        cur.normv.Read(ptr);
+        cur.raydir.Read(ptr);
+        memcpy(&cur.material, ptr, 4), ptr = (char *)ptr + 4;
+        memcpy(&cur.x, ptr, 4), ptr = (char *)ptr + 4;
+        memcpy(&cur.y, ptr, 4), ptr = (char *)ptr + 4;
+        cur.wgt.Read(ptr);
+        cur.direct.Read(ptr);
         cur.radius = INITRADIUS;
         hits.push_back(cur);
     }
-    iff.close();
-    cin.rdbuf(cinBuf);
+    free(buf);
+    printf("hitpoints loaded\n");
 }
 
-void clearptnlist() {
+void clearptnlist()
+{
     while (!ptns.empty()) {
         delete ptns.back();
         ptns.pop_back();
     }
 }
 
-void readfile() {
+void readfile()
+{
     filelistlock.lock();
     clearptnlist();
-    const char* curfile = filelist.front().c_str();
-    ifstream iff(curfile);
-    cin.rdbuf(iff.rdbuf());
+    const char *curfile = filelist.front().c_str();
+    FILE *file = fopen(curfile, "r");
     filelist.pop_front();
-    Photon* curptn = new Photon;
-    while (cin >> curptn->light.bgn
-            >> curptn->light.vec
-            >> curptn->rgb
-            >> curptn->mtl) {
+    Photon *curptn = new Photon;
+    while (curptn->light.bgn.Read(file) != 0
+           && curptn->light.vec.Read(file) != 0
+           && curptn->rgb.Read(file) != 0
+           && fread(&curptn->mtl, 4, 1, file) != 0) {
         ptns.push_back(curptn);
         curptn = new Photon;
     }
     delete curptn;
-    iff.close();
-    cin.rdbuf(cinBuf);
+    fclose(file);
     filelistlock.unlock();
 }
 
-void updateHitpoints() {
+void updateHitpoints()
+{
+    printf("updating hitpoints...\n");
     readfile();
     ptntree = new ptnKDTree(ptns.begin(), ptns.end());
 
-    for (auto& ht : hits)
+    for (auto &ht : hits)
         if (ht.radius > EPS) {
             nearptns.clear();
             ptntree->find(ht, nearptns);
+            if (nearptns.empty())
+                continue;
             int M = nearptns.size();
             double N = ht.ptncount;
             ht.ptncount += ALPHA * M;
             double ratio = ht.ptncount / (N + M);
             ht.radius *= sqrt(ratio);
             for (auto &ptn : nearptns)
-                ht.tau += elemMult(ptn->rgb, material[ptn->mtl].BRDF(ptn->light.vec, ht.raydir, ht.normv));
+                if (dotsProduct(ptn->light.vec, ht.normv) > EPS)
+                    ht.tau += elemMult(ptn->rgb, material[ptn->mtl].BRDF(ptn->light.vec, ht.raydir, ht.normv));
             ht.tau *= ratio;
         }
     Nemit += ptns.size();
@@ -121,29 +136,40 @@ void updateHitpoints() {
     ptntree = NULL;
 }
 
-void putImage(int id) {
+void putImage()
+{
+    static int id = 0;
     char str[100];
-    sprintf(str, "ppm%d.png", id);
-    std::vector<std::uint8_t> Buffer(WINDOW_WIDTH * WINDOW_HEIGHT * 4); // RGBA
+    sprintf(str, "ppm%d.png", id++);
+    unsigned char *buf = (unsigned char *)malloc(WINDOW_WIDTH * WINDOW_HEIGHT * 4);
+    memset(buf, 0, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
     for (auto &ht : hits) {
         int pos = ht.x * WINDOW_WIDTH + ht.y;
+        pos *= 4;
         for (int i = 0; i < 3; ++i) {
-            double tmp = ht.tau.value[i] / Nemit;
-            Buffer[pos + i] = uint8_t(255 * tmp);
+            double tmp = ht.tau.value[i] / Nemit + ht.direct.value[i];
+            tmp *= ht.wgt.value[i];
+            buf[pos + i] += uint8_t(255 * tmp);
         }
-        Buffer[pos + 4] = 0;
     }
-    std::vector<std::uint8_t> ImageBuffer;
-    lodepng::encode(ImageBuffer, Buffer, WINDOW_WIDTH, WINDOW_HEIGHT);
-    lodepng::save_file(ImageBuffer, str);
+    for (int x = 0; x < WINDOW_HEIGHT; ++x)
+        for (int y = 0; y < WINDOW_WIDTH; ++y)
+            buf[(x * WINDOW_WIDTH + y) * 4 + 3] = 255;
+    lodepng_encode32_file(str, buf, WINDOW_WIDTH, WINDOW_HEIGHT);
+    free(buf);
+    printf("generated image %s\n", str);
 }
 
-int main(int argc, char* argv[]) {
-    pid_t pid;
+int main(int argc, char *argv[])
+{
+    if (argc != 2) {
+        printf("Usage: %s <directory>\n", argv[0]);
+        return 1;
+    }
 
+    pid_t pid;
     if (pipe(fd2) < 0)
         cerr << "pipe error" << endl;
-
 GO_FORK:
     if (totforks < MAXFORKS) {
         if ((pid = fork()) < 0) {
@@ -152,11 +178,13 @@ GO_FORK:
         }
         ++totforks;
     }
-
     if (pid > 0) { // parent process
         if (totforks < MAXFORKS)
             goto GO_FORK;
         close(fd2[1]);
+
+        chdir(argv[1]);
+        readModel("list.txt");
 
         filelist.clear();
         thread th(listenTerminal);
@@ -171,11 +199,10 @@ GO_FORK:
                 updateHitpoints();
                 ++cnt;
                 if (cnt % ITERATION_PER_OUTPUT)
-                    putImage(cnt / ITERATION_PER_OUTPUT);
+                    putImage();
             }
-
-        exit(0);
-    } else { // child process
+    }
+    else {   // child process
         close(fd2[0]);
         if (fd2[1] != STDOUT_FILENO) {
             if (dup2(fd2[1], STDOUT_FILENO) != STDOUT_FILENO)
@@ -184,8 +211,8 @@ GO_FORK:
         }
         char str[10];
         sprintf(str, "%d", totforks);
-        if (execl("./photontracing", "photontracing", str, (char*)0) < 0)
+        if (execl("./photontracing", "photontracing", argv[1], str, (char *)0) < 0)
             cerr << "execl error" << endl;
     }
-    exit(0);
+    return 0;
 }

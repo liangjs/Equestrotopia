@@ -110,8 +110,11 @@ namespace Equestria
         z /= l;
     }
 
-    void Point::rotate(double dr, const Point &axis)
+    void Point::rotate(double dr, const Point &center, const Point &axis)
     {
+        x -= center.x;
+        y -= center.y;
+        z -= center.z;
         double q1 = cos(dr / 2),
                q2 = sin(dr / 2) * axis.x,
                q3 = sin(dr / 2) * axis.y,
@@ -126,6 +129,9 @@ namespace Equestria
         z = 2 * (q2 * q4 - q1 * q3) * tx
             + 2 * (q3 * q4 + q1 * q2) * ty
             + (sqr(q1) - sqr(q2) - sqr(q3) + sqr(q4)) * tz;
+        x = x + center.x;
+        y = y + center.y;
+        z = z + center.z;
     }
 
     void Point::multiByChannel(const Point &p)
@@ -144,7 +150,6 @@ namespace Equestria
     {
         return is >> p.x >> p.y >> p.z;
     }
-
 
     Sphere::Sphere(): center(), radius(0) {}
     Sphere::Sphere(const Point &a, double r): center(a), radius(r) {}
@@ -211,13 +216,13 @@ namespace Equestria
         return N;
     }
 
-    void Polygon::rotate(double dr, const Point &axis)
+    void Polygon::rotate(double dr, const Point &center, const Point &axis)
     {
         for (auto &p : pList)
-            p.rotate(dr, axis);
+            p.rotate(dr, center, axis);
         for (auto &p : normvList)
-            p.rotate(dr, axis);
-        normvf.rotate(dr, axis);
+            p.rotate(dr, center, axis);
+        normvf.rotate(dr, center, axis);
 
         Point ta = pList[c2] - pList[c1], tb = pList[c3] - pList[c1];
         xy = ta.x * tb.y - ta.y * tb.x;

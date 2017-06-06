@@ -122,13 +122,14 @@ namespace Equestria {
         sort(bgn, ed,
              [v](Photon * a, Photon * b)->bool{return a->light.bgn.value[v] < b->light.bgn.value[v];});
         vptnit split = bgn;
-        int maxsplit = 0;
+        int maxsplit = ed - bgn;
         for (vptnit i = bgn + 1; i != ed; ++i)
             if (((*i)->light.bgn.value[v] != (*(i - 1))->light.bgn.value[v]) &&
-                    (maxsplit < abs((ed - i) + (i - bgn)))) {
-                maxsplit = abs((ed - i) + (i - bgn));
+                    (maxsplit > abs((ed - i) - (i - bgn)))) {
+                maxsplit = abs((ed - i) - (i - bgn));
                 split = i;
             }
+       
         son[0] = new ptnKDTree(bgn, split, (v + 1) % 3);
         son[1] = new ptnKDTree(split, ed, (v + 1) % 3);
 
@@ -140,9 +141,9 @@ namespace Equestria {
     }
 
     void ptnKDTree::find(const Hitpoint& hp, vector<Photon*>& lst) {
-        double dx = max(abs(bdmin[0] - hp.position.x), abs(bdmax[0] - hp.position.x)),
-               dy = max(abs(bdmin[1] - hp.position.y), abs(bdmax[1] - hp.position.y)),
-               dz = max(abs(bdmin[2] - hp.position.z), abs(bdmax[2] - hp.position.z));
+        double dx = max(fabs(bdmin[0] - hp.position.x), fabs(bdmax[0] - hp.position.x)),
+               dy = max(fabs(bdmin[1] - hp.position.y), fabs(bdmax[1] - hp.position.y)),
+               dz = max(fabs(bdmin[2] - hp.position.z), fabs(bdmax[2] - hp.position.z));
         double maxdist = sqr(dx) + sqr(dy) + sqr(dz);
         if (maxdist < hp.radius + EPS) {
             for (vptnit i = begin; i != end; ++i)

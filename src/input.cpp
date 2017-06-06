@@ -48,8 +48,19 @@ namespace Equestria
         double dr, ax, ay, az;
         fscanf(rotfile, "%lf%lf%lf%lf", &ax, &ay, &az, &dr);
         Point axis(ax, ay, az);
+
+        double bdmin[3], bdmax[3];
+        for (int i = 0; i < 3; ++i)
+            bdmin[i] = INF, bdmax[i] = -INF;
+        for (auto &i : polygon)
+            for (int j = 0; j < 3; ++j) {
+                bdmin[j] = std::min(bdmin[j], i->bdmin[j]);
+                bdmax[j] = std::max(bdmax[j], i->bdmax[j]);
+            }
+        Point center((bdmin[0] + bdmax[0]) / 2, (bdmin[1] + bdmax[1]) / 2, (bdmin[2] + bdmax[2]) / 2);
+
         for (auto &p : polygon)
-            p->rotate(dr, axis);
+            p->rotate(dr, center, axis);
     }
 
     typedef std::vector<std::string>::iterator vsi_t;

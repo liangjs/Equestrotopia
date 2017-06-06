@@ -27,6 +27,7 @@ namespace Equestria {
             Ray();
             Ray(const Point& b, const Point& v);
             friend std::ostream& operator<< (std::ostream&, const Ray&);
+            inline void Print(FILE *file) { bgn.Print(file); vec.Print(file); }
     };
 
     class Photon {

@@ -44,7 +44,6 @@ void readInput(const string &path)
     fin.close();
     camera.normal = camera.o - camera.focus;
     camera.normal /= camera.normal.len();
-    chdir("..");
 }
 
 void build_polyKDTree()
@@ -104,7 +103,7 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
             double vlen = L.len();
             if (dcmp(tt, vlen) >= 0) {
                 L /= vlen;
-                Point c = elemMult(light.color, material[p->label].BRDF(L, -ray.vec, N));
+                Point c = light.color;//elemMult(light.color, material[p->label].BRDF(L, -ray.vec, N));
                 if (mtl.mapKd != -1)
                     c = elemMult(c, mtl.getKd(u, v));
                 hit.direct += c * light.power;
@@ -112,6 +111,45 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
         }
         hits.push_back(hit);
     }
+}
+
+void Run()
+{
+    Point dx = camera.vx / WINDOW_HEIGHT;
+    Point dy = camera.vy / WINDOW_WIDTH;
+    Point _dx = dx / SAMPLE_RATE, _dy = dy / SAMPLE_RATE;
+    Point identity(1, 1, 1);
+    for (int x = 0; x < WINDOW_HEIGHT; ++x) {
+        //printf("progress: %g\n", (float)x / WINDOW_WIDTH);
+        for (int y = 0; y < WINDOW_WIDTH; ++y) {
+            Point center = camera.o + (x - WINDOW_HEIGHT / 2.0 + 0.5) * dx + (y - WINDOW_WIDTH / 2.0 + 0.5) * dy;
+            for (int i = 0; i < SAMPLE_RATE; ++i)
+                for (int j = 0; j < SAMPLE_RATE; ++j) {
+                    Point center2 = center + (i - SAMPLE_RATE / 2.0 + 0.5) * _dx + (j - SAMPLE_RATE / 2.0 + 0.5) * _dy;
+                    RayTracing(Ray(center2, center2 - camera.focus), 1, x, y, identity * antiAliasMatrix[i][j]);
+                }
+        }
+    }
+    putchar('\n');
+}
+
+void output()
+{
+    //cout << "generating output 'hitpoints.txt'" << endl;
+    FILE *file = fopen("hitpoints.txt", "wb");
+    int sz = hits.size();
+    fwrite(&sz, 4, 1, file);
+    for (auto &i : hits) {
+        i.position.Print(file);
+        i.normv.Print(file);
+        i.raydir.Print(file);
+        fwrite(&i.material, 4, 1, file);
+        fwrite(&i.x, 4, 1, file);
+        fwrite(&i.y, 4, 1, file);
+        i.wgt.Print(file);
+        i.direct.Print(file);
+    }
+    fclose(file);
 }
 
 int main(int argc, char *argv[])
@@ -124,31 +162,8 @@ int main(int argc, char *argv[])
     readInput(argv[1]);
     build_polyKDTree();
 
-    Point dx = camera.vx / WINDOW_HEIGHT;
-    Point dy = camera.vy / WINDOW_WIDTH;
-    Point _dx = dx / SAMPLE_RATE, _dy = dy / SAMPLE_RATE;
-    Point identity(1, 1, 1);
-    for (int x = 0; x < WINDOW_HEIGHT; ++x)
-        for (int y = 0; y < WINDOW_WIDTH; ++y) {
-            Point center = camera.o + (x - WINDOW_HEIGHT / 2.0 + 0.5) * dx + (y - WINDOW_WIDTH / 2.0 + 0.5) * dy;
-            for (int i = 0; i < SAMPLE_RATE; ++i)
-                for (int j = 0; j < SAMPLE_RATE; ++j) {
-                    Point center2 = center + (i - SAMPLE_RATE / 2.0 + 0.5) * _dx + (j - SAMPLE_RATE / 2.0 + 0.5) * _dy;
-                    RayTracing(Ray(center2, center2 - camera.focus), 1, x, y, identity * antiAliasMatrix[i][j]);
-                }
-        }
+    Run();
 
-    ofstream of("hitpoints.txt");
-    of << hits.size() << endl;
-    for (auto &i : hits) {
-        of << i.position << endl;
-        of << i.normv << endl;
-        of << i.raydir << endl;
-        of << i.material << endl;
-        of << i.x << ' ' << i.y << endl;
-        of << i.wgt << endl;
-        of << i.direct << endl;
-    }
-    of.close();
+    output();
     return 0;
 }
