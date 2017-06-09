@@ -440,4 +440,21 @@ namespace Equestria
         t = nn * d + sqrt(t);
         return Ray(p - N * EPS, nn * I - t * N);
     }
+
+    double integral(double l, double r, const std::function<double(double)> &f)
+    {
+        auto simpson = [&](double a, double b) {
+            double c =  a + (b - a) / 2;
+            return (f(a) + 4 * f(c) + f(b)) * (b - a) / 6;
+        };
+        std::function<double(double, double, double)> asr = [&](double a, double b, double A){
+            double c = (b + a) / 2;
+            double L = simpson(a, c), R = simpson(c, b);
+            const double eps = 0.001;
+            if (fabs(A - L - R) <= eps)
+                return A;
+            return asr(a, c, L) + asr(c, b, R);
+        };
+        return asr(l, r, simpson(l, r));
+    }
 }

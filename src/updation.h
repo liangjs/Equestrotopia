@@ -2,8 +2,8 @@
 #define UPDATION_H
 
 const int MAXNLINE = 1000;
-const int MAXFORKS = 4;
-const double INITRADIUS = 10;
+const int MAXFORKS = 1;
+const double INITRADIUS = 0.03;
 const double ALPHA = 0.65;
 
 #include "ppm.h"

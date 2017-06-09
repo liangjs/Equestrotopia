@@ -42,30 +42,34 @@ void placeCameraLight()
     Point center((bdmin[0] + bdmax[0]) / 2, (bdmin[1] + bdmax[1]) / 2, (bdmin[2] + bdmax[2]) / 2);
 
     camera.o = center;
-    camera.o.y = bdmin[1] * 0.9 + bdmin[1] * 0.1;
-    camera.vx = Point(0, 0, -(bdmax[2] - bdmin[2]) / 2);
-    camera.vy = Point((bdmax[0] - bdmin[0]) / 2, 0, 0);
+    camera.o.y = bdmin[1] * 0.9 + bdmax[1] * 0.1;
+    camera.vx = Point(0, 0, -(bdmax[2] - bdmin[2]) / 20);
+    camera.vy = Point((bdmax[0] - bdmin[0]) / 20, 0, 0);
     double lvx = camera.vx.len(), lvy = camera.vy.len();
     if (lvx * WINDOW_WIDTH < lvy * WINDOW_HEIGHT)
         camera.vx *= lvy / lvx * WINDOW_HEIGHT / WINDOW_WIDTH;
     else
         camera.vy *= lvx / lvy * WINDOW_WIDTH / WINDOW_HEIGHT;
     camera.focus = center;
-    camera.focus.y -= bdmax[1] - bdmin[1];
+    camera.focus.y = bdmin[1] * 0.91 + bdmax[1] * 0.09;
     camera.normal = camera.o - camera.focus;
     camera.normal /= camera.normal.len();
+
+    double env_len = 0;
+    for (int i = 0; i < 3; ++i)
+        env_len = max(env_len, bdmax[i] - bdmin[i]);
+    const double LIGHT_PER_METER = 255;
+    double light_power = sqr(env_len) * LIGHT_PER_METER;
 
     Light l0, l1;
     l0.pos = camera.o;
     l0.pos.z += (bdmax[2] - bdmin[2]) / 2;
-    l0.color = Point(1, 1, 1);
-    l0.power = 0.5;
+    l0.I = Point(1, 1, 1) * light_power;
     lights.push_back(l0);
 
     l1.pos = center;
     l1.pos.z += (bdmax[2] - bdmin[2]) / 2;
-    l1.color = Point(1, 1, 1);
-    l1.power = 0.5;
+    l1.I = Point(1, 1, 1) * light_power;
     lights.push_back(l1);
 }
 
@@ -87,7 +91,7 @@ int main(int argc, char *argv[])
     fout.open("light.txt");
     fout << lights.size() << endl;
     for (auto &i : lights)
-        fout << i.pos << ' ' << i.color << ' ' << i.power << endl;
+        fout << i.pos << ' ' << i.I << endl;
     fout.close();
 
     return 0;

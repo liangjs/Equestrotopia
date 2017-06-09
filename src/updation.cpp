@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <signal.h>
 #include <thread>
+#include <chrono>
 #include <mutex>
 
 #include "light.h"
@@ -34,6 +35,7 @@ mutex filelistlock;
 bool endflag = false;
 int Nemit = 0;
 char cwd[1000];
+Camera camera;
 
 void pushFile(const char *str)
 {
@@ -94,6 +96,9 @@ void readfile()
     clearptnlist();
     const char *curfile = filelist.front().c_str();
     FILE *file = fopen(curfile, "r");
+    int N;
+    fread(&N, 4, 1, file);
+    Nemit += N;
     filelist.pop_front();
     Photon *curptn = new Photon;
     while (curptn->light.bgn.Read(file) != 0
@@ -111,7 +116,6 @@ void readfile()
 void updateHitpoints()
 {
     printf("updating hitpoints...\n");
-    readfile();
     ptntree = new ptnKDTree(ptns.begin(), ptns.end());
 
     for (auto &ht : hits)
@@ -127,10 +131,9 @@ void updateHitpoints()
             ht.radius *= sqrt(ratio);
             for (auto &ptn : nearptns)
                 if (dotsProduct(ptn->light.vec, ht.normv) > EPS)
-                    ht.tau += elemMult(ptn->rgb, material[ptn->mtl].BRDF(ptn->light.vec, ht.raydir, ht.normv));
+                    ht.tau += elemMult(ptn->rgb, material[ptn->mtl].BRDF(ptn->light.vec, ht.raydir, ht.normv)) * dotsProduct(ptn->light.vec, ht.normv);
             ht.tau *= ratio;
         }
-    Nemit += ptns.size();
 
     delete ptntree;
     ptntree = NULL;
@@ -143,13 +146,22 @@ void putImage()
     sprintf(str, "ppm%d.png", id++);
     unsigned char *buf = (unsigned char *)malloc(WINDOW_WIDTH * WINDOW_HEIGHT * 4);
     memset(buf, 0, WINDOW_WIDTH * WINDOW_HEIGHT * 4);
+    /*static double Omega_Pixel = 4 * integral(0, camera.vx.len() / 2, [](double x) {
+        static double h = (camera.o - camera.focus).len2();
+        double t = 1 / sqrt(x * x + h);
+        return t * atan(camera.vy.len() / 2 * t);
+    }) / WINDOW_WIDTH / WINDOW_HEIGHT;
+    printf("%g\n", Omega_Pixel*WINDOW_WIDTH*WINDOW_HEIGHT);*/
     for (auto &ht : hits) {
         int pos = ht.x * WINDOW_WIDTH + ht.y;
         pos *= 4;
         for (int i = 0; i < 3; ++i) {
             double tmp = ht.tau.value[i] / Nemit + ht.direct.value[i];
+            //tmp *= Omega_Pixel;
+            if (tmp > 255)
+                tmp = 255;
             tmp *= ht.wgt.value[i];
-            buf[pos + i] += uint8_t(255 * tmp);
+            buf[pos + i] += tmp;
         }
     }
     for (int x = 0; x < WINDOW_HEIGHT; ++x)
@@ -158,6 +170,28 @@ void putImage()
     lodepng_encode32_file(str, buf, WINDOW_WIDTH, WINDOW_HEIGHT);
     free(buf);
     printf("generated image %s\n", str);
+}
+
+void readInput()
+{
+    readModel("list.txt");
+    ifstream fin("camera.txt");
+    if (!fin.good())
+        cerr << "camera.txt reading error" << endl;
+    fin >> camera.focus >> camera.o >> camera.vx >> camera.vy;
+    fin.close();
+    camera.normal = camera.o - camera.focus;
+    camera.normal /= camera.normal.len();
+}
+
+void update()
+{
+    static int cnt = 0;
+    readfile();
+    updateHitpoints();
+    ++cnt;
+    if (cnt % ITERATION_PER_OUTPUT == 0)
+        putImage();
 }
 
 int main(int argc, char *argv[])
@@ -184,7 +218,7 @@ GO_FORK:
         close(fd2[1]);
 
         chdir(argv[1]);
-        readModel("list.txt");
+        readInput();
 
         filelist.clear();
         thread th(listenTerminal);
@@ -194,13 +228,12 @@ GO_FORK:
         loadHitpoints();
 
         while (!endflag)
-            if (!filelist.empty()) {
-                static int cnt = 0;
-                updateHitpoints();
-                ++cnt;
-                if (cnt % ITERATION_PER_OUTPUT)
-                    putImage();
-            }
+            if (filelist.empty())
+                this_thread::sleep_for(chrono::seconds(1));
+            else
+                update();
+        while (!filelist.empty())
+            update();
     }
     else {   // child process
         close(fd2[0]);

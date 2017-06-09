@@ -51,7 +51,7 @@ namespace Equestria
         friend std::istream &operator>> (std::istream &is, const Point &p);
         inline void Print(FILE *file) { fwrite(value, sizeof(double), 3, file); }
         inline int Read(FILE *file) { return fread(value, sizeof(double), 3, file); }
-        inline int Read(void *&ptr) { memcpy(value, ptr, 24); ptr = (char*)ptr+24; }
+        inline void Read(void *&ptr) { memcpy(value, ptr, 24); ptr = (char*)ptr+24; }
     };
 
     class Sphere
@@ -112,6 +112,8 @@ namespace Equestria
 
     Ray reflect(const Point &p, const Point &N, const Point &I);
     Ray refract(const Point &p, double n1, double n2, const Point &N, const Point &I);
+
+    double integral(double l, double r, const std::function<double(double)> &f);
 }
 
 

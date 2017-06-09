@@ -64,8 +64,7 @@ namespace Equestria {
 
     struct Light {
         Point pos;
-        Point color;
-        double power; /* 0~1 */
+        Point I; /* Radiant Intensity */
     };
 }
 

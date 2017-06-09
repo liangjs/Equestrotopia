@@ -36,13 +36,8 @@ void readInput(const string &path)
     int nlight;
     fin >> nlight;
     lights.resize(nlight);
-    double powersum = 0;
-    for (int i = 0; i < nlight; ++i) {
-        fin >> lights[i].pos >> lights[i].color >> lights[i].power;
-        powersum += lights[i].power;
-    }
     for (int i = 0; i < nlight; ++i)
-        lights[i].power /= powersum;
+        fin >> lights[i].pos >> lights[i].I;
     fin.close();
 }
 
@@ -78,9 +73,9 @@ Point getSphereRandomPoint(int flag = 0, Point *norm = NULL)
 void ejectphoton(const Light &light, const Point &dir, FILE *file)
 {
     double n1 = 1;
-    Point rgb(light.color);
+    Point rgb(light.I * 4 * M_PI);
     Ray ray(light.pos, dir);
-    for (int bounce = 0; bounce < MAXBOUNCES && rgb.len() > EPS; ++bounce) {
+    for (int bounce = 0; bounce < MAXBOUNCES; ++bounce) {
         Polygon *p;
         double t = intersect(ray, polytree, p);
         if (t == INF)
@@ -109,8 +104,9 @@ void ejectphoton(const Light &light, const Point &dir, FILE *file)
             ray.bgn = pos + addition;
             Point reflectv = getSphereRandomPoint(1, &N);
             rgb.multiByChannel(material[p->label].BRDF(-ray.vec, reflectv, N));
-            if (mtl.mapKa != -1)
-                rgb.multiByChannel(mtl.getKd(u, v));
+            rgb *= dotsProduct(-ray.vec, N);
+            //if (mtl.mapKa != -1)
+            //    rgb.multiByChannel(mtl.getKd(u, v));
             ray.vec = reflectv;
         }
         else {   // refracted or absorbed
@@ -150,8 +146,10 @@ int main(int argc, char *argv[])
         char str[100];
         sprintf(str, "PhotonMap%d-%d.map", curv, iteration);
         FILE *file = fopen(str, "w");
+        int Nemit = lights.size() * PHOTONSPER;
+        fwrite(&Nemit, 4, 1, file);
         for (auto &curlight : lights)
-            for (int i = 0; i < PHOTONSPER * curlight.power; ++i)
+            for (int i = 0; i < PHOTONSPER; ++i)
                 ejectphoton(curlight, getSphereRandomPoint(), file);
         fclose(file);
         puts(str);

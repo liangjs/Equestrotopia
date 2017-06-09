@@ -34,13 +34,8 @@ void readInput(const string &path)
     int nlight;
     fin >> nlight;
     lights.resize(nlight);
-    double powersum = 0;
-    for (int i = 0; i < nlight; ++i) {
-        fin >> lights[i].pos >> lights[i].color >> lights[i].power;
-        powersum += lights[i].power;
-    }
     for (int i = 0; i < nlight; ++i)
-        lights[i].power /= powersum;
+        fin >> lights[i].pos >> lights[i].I;
     fin.close();
     camera.normal = camera.o - camera.focus;
     camera.normal /= camera.normal.len();
@@ -74,7 +69,8 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
     p->txCoordinate(pos, u, v);
     if (deep < maxdeep) {
         if (dcmp(mtl.Ns, 100) > 0) {/* specular */
-            RayTracing(reflect(pos, N, ray.vec), n1, pixel_x, pixel_y, elemMult(wgt, mtl.getKs(u, v)), deep + 1);
+            Ray r2(reflect(pos, N, ray.vec));
+            RayTracing(r2, n1, pixel_x, pixel_y, elemMult(wgt, material[p->label].BRDF(-r2.vec, -ray.vec, N)), deep + 1);
             end = false;
         }
         if (mtl.Tr > EPS) /* transparent */
@@ -103,10 +99,11 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
             double vlen = L.len();
             if (dcmp(tt, vlen) >= 0) {
                 L /= vlen;
-                Point c = light.color;//elemMult(light.color, material[p->label].BRDF(L, -ray.vec, N));
-                if (mtl.mapKd != -1)
-                    c = elemMult(c, mtl.getKd(u, v));
-                hit.direct += c * light.power;
+                Point c = elemMult(light.I / sqr(vlen), material[p->label].BRDF(L, -ray.vec, N));
+                c *= dotsProduct(L, N); // cos(theta_i)
+                //if (mtl.mapKd != -1)
+                //    c = elemMult(c, mtl.getKd(u, v));
+                hit.direct += c;
             }
         }
         hits.push_back(hit);
@@ -130,7 +127,6 @@ void Run()
                 }
         }
     }
-    putchar('\n');
 }
 
 void output()

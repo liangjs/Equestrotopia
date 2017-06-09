@@ -145,7 +145,7 @@ namespace Equestria {
                dy = max(fabs(bdmin[1] - hp.position.y), fabs(bdmax[1] - hp.position.y)),
                dz = max(fabs(bdmin[2] - hp.position.z), fabs(bdmax[2] - hp.position.z));
         double maxdist = sqr(dx) + sqr(dy) + sqr(dz);
-        if (maxdist < hp.radius + EPS) {
+        if (maxdist < sqr(hp.radius) + EPS) {
             for (vptnit i = begin; i != end; ++i)
                 lst.push_back(*i);
             return;
@@ -158,7 +158,7 @@ namespace Equestria {
             else if (hp.position.value[i] < bdmin[i] - EPS)
                 mindist += sqr(hp.position.value[i] - bdmin[i]);
 
-        if (mindist > hp.radius + EPS)
+        if (mindist > sqr(hp.radius) + EPS)
             return;
         son[0]->find(hp, lst);
         son[1]->find(hp, lst);
