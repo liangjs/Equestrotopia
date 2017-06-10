@@ -155,6 +155,17 @@ namespace Equestria
     Sphere::Sphere(const Point &a, double r): center(a), radius(r) {}
     Sphere::Sphere(double ox, double oy, double oz, double r): center(ox, oy, oz), radius(r) {}
 
+    Point Sphere::getNormal(const Point &p)const
+    {
+        Point v = p - center;
+        return v / v.len();
+    }
+
+    void Sphere::rotate(double dr, const Point &o, const Point &axis)
+    {
+        center.rotate(dr, o, axis);
+    }
+
     Polygon::Polygon(const Polygon &p): num(p.num), label(p.label), normvf(p.normvf), pList(p.pList), normvList(p.normvList), texList(p.texList)
     {
         memcpy(bdmin, p.bdmin, sizeof(bdmin));
@@ -415,6 +426,8 @@ namespace Equestria
 
     Point Material::BRDF(const Point &v_in, const Point &v_out, const Point &N)
     {
+        if (brdf == NULL)
+            return mtl.Kd;
         double theta_in = acos(dotsProduct(v_in, N));
         double theta_out = acos(dotsProduct(v_out, N));
         Point v_in2 = v_in - N * cos(theta_in);
@@ -447,7 +460,7 @@ namespace Equestria
             double c =  a + (b - a) / 2;
             return (f(a) + 4 * f(c) + f(b)) * (b - a) / 6;
         };
-        std::function<double(double, double, double)> asr = [&](double a, double b, double A){
+        std::function<double(double, double, double)> asr = [&](double a, double b, double A) {
             double c = (b + a) / 2;
             double L = simpson(a, c), R = simpson(c, b);
             const double eps = 0.001;

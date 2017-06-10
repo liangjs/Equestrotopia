@@ -10,6 +10,7 @@
 namespace Equestria
 {
     extern std::vector<Polygon *> polygon;
+    extern std::vector<Sphere *> sphere;
     extern std::map<std::string, int> mtlIndex;
 
     struct Material {
@@ -49,6 +50,7 @@ namespace Equestria
 
     void readModel(const std::string &file);
     void objRead(const std::string &file); // read obj file and save polygons to "polygon"
+    void sphereRead(const std::string &file);
     void strSplit(const std::string &str, std::vector<std::string> &ans);
     void mtlRead(const std::string &file); // read mtl file and save to "material"
 
@@ -56,7 +58,7 @@ namespace Equestria
     extern std::vector<Texture> texture;
     void readTexture(const std::string &file);
 
-    void rotateModel(const std::string &fname); // rotate ALL the model according to prerotate.txt
+    //void rotateModel(const std::string &fname); // rotate ALL the model according to prerotate.txt
 }
 
 #endif

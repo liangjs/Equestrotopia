@@ -9,7 +9,8 @@ namespace Equestria {
         Point position;
         Point normv;
         Point raydir;
-        int material;
+        int mtl_label;
+        double u, v;
         int x, y; // Pixel location
         Point wgt; // Pixel weight
         double radius;
@@ -65,6 +66,7 @@ namespace Equestria {
     struct Light {
         Point pos;
         Point I; /* Radiant Intensity */
+        double power;
     };
 }
 

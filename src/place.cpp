@@ -18,7 +18,7 @@ vector<Light> lights;
 void readInput()
 {
     readModel("list.txt");
-    rotateModel("prerotate.txt");
+    //rotateModel("prerotate.txt");
 }
 
 void placeCameraLight()

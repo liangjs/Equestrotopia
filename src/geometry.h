@@ -51,10 +51,17 @@ namespace Equestria
         friend std::istream &operator>> (std::istream &is, const Point &p);
         inline void Print(FILE *file) { fwrite(value, sizeof(double), 3, file); }
         inline int Read(FILE *file) { return fread(value, sizeof(double), 3, file); }
-        inline void Read(void *&ptr) { memcpy(value, ptr, 24); ptr = (char*)ptr+24; }
+        inline void Read(void *&ptr) { memcpy(value, ptr, 24); ptr = (char *)ptr + 24; }
     };
 
-    class Sphere
+    class Object
+    {
+    public:
+        virtual Point getNormal(const Point &p)const = 0;
+        virtual void rotate(double dr, const Point &center, const Point &axis) = 0;
+    };
+
+    class Sphere: public Object
     {
     public:
         Point center;
@@ -64,9 +71,11 @@ namespace Equestria
         Sphere(const Point &, double r);
         Sphere(double ox, double oy, double oz, double r);
 
+        Point getNormal(const Point &p)const;
+        void rotate(double dr, const Point &o, const Point &axis);
     };
 
-    class Polygon
+    class Polygon: public Object
     {
     public:
         double xy, xz, yz; // used to optimize calculation

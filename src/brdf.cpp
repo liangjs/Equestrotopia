@@ -35,17 +35,20 @@
 #define M_PI    3.1415926535897932384626433832795
 #endif
 
-namespace BRDF {
+namespace BRDF
+{
 
 // cross product of two vectors
-    void cross_product(double *v1, double *v2, double *out) {
+    void cross_product(double *v1, double *v2, double *out)
+    {
         out[0] = v1[1] * v2[2] - v1[2] * v2[1];
         out[1] = v1[2] * v2[0] - v1[0] * v2[2];
         out[2] = v1[0] * v2[1] - v1[1] * v2[0];
     }
 
 // normalize vector
-    void normalize(double *v) {
+    void normalize(double *v)
+    {
         // normalize
         double len = sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
         v[0] = v[0] / len;
@@ -54,7 +57,8 @@ namespace BRDF {
     }
 
 // rotate vector along one axis
-    void rotate_vector(double *vector, double *axis, double angle, double *out) {
+    void rotate_vector(double *vector, double *axis, double angle, double *out)
+    {
         double temp;
         double cross[3];
         double cos_ang = cos(angle);
@@ -81,7 +85,8 @@ namespace BRDF {
 
 // convert standard coordinates to half vector/difference vector coordinates
     void std_coords_to_half_diff_coords(double theta_in, double fi_in, double theta_out, double fi_out,
-                                        double &theta_half, double &fi_half, double &theta_diff, double &fi_diff) {
+                                        double &theta_half, double &fi_half, double &theta_diff, double &fi_diff)
+    {
 
         // compute in vector
         double in_vec_z = cos(theta_in);
@@ -128,12 +133,22 @@ namespace BRDF {
 
     }
 
+    inline double theta_half_index_lf(double theta_half)
+    {
+        if (theta_half <= 0.0)
+            return 0;
+        double theta_half_deg = ((theta_half / (M_PI / 2.0)) * BRDF_SAMPLING_RES_THETA_H);
+        double temp = theta_half_deg * BRDF_SAMPLING_RES_THETA_H;
+        temp = sqrt(temp);
+        return temp;
+    }
 
 // Lookup theta_half index
 // This is a non-linear mapping!
 // In:  [0 .. pi/2]
 // Out: [0 .. 89]
-    inline int theta_half_index(double theta_half) {
+    inline int theta_half_index(double theta_half)
+    {
         if (theta_half <= 0.0)
             return 0;
         double theta_half_deg = ((theta_half / (M_PI / 2.0)) * BRDF_SAMPLING_RES_THETA_H);
@@ -147,11 +162,22 @@ namespace BRDF {
         return ret_val;
     }
 
+    inline double theta_diff_index_lf(double theta_diff)
+    {
+        double tmp = theta_diff / (M_PI * 0.5) * BRDF_SAMPLING_RES_THETA_D;
+        if (tmp < 0)
+            return 0;
+        else if (tmp < BRDF_SAMPLING_RES_THETA_D - 1)
+            return tmp;
+        else
+            return BRDF_SAMPLING_RES_THETA_D - 1;
+    }
 
 // Lookup theta_diff index
 // In:  [0 .. pi/2]
 // Out: [0 .. 89]
-    inline int theta_diff_index(double theta_diff) {
+    inline int theta_diff_index(double theta_diff)
+    {
         int tmp = int(theta_diff / (M_PI * 0.5) * BRDF_SAMPLING_RES_THETA_D);
         if (tmp < 0)
             return 0;
@@ -161,9 +187,27 @@ namespace BRDF {
             return BRDF_SAMPLING_RES_THETA_D - 1;
     }
 
+    inline double phi_diff_index_lf(double phi_diff)
+    {
+        // Because of reciprocity, the BRDF is unchanged under
+        // phi_diff -> phi_diff + M_PI
+        if (phi_diff < 0.0)
+            phi_diff += M_PI;
+
+        // In: phi_diff in [0 .. pi]
+        // Out: tmp in [0 .. 179]
+        double tmp = phi_diff / M_PI * BRDF_SAMPLING_RES_PHI_D / 2;
+        if (tmp < 0)
+            return 0;
+        else if (tmp < BRDF_SAMPLING_RES_PHI_D / 2 - 1)
+            return tmp;
+        else
+            return BRDF_SAMPLING_RES_PHI_D / 2 - 1;
+    }
 
 // Lookup phi_diff index
-    inline int phi_diff_index(double phi_diff) {
+    inline int phi_diff_index(double phi_diff)
+    {
         // Because of reciprocity, the BRDF is unchanged under
         // phi_diff -> phi_diff + M_PI
         if (phi_diff < 0.0)
@@ -180,17 +224,33 @@ namespace BRDF {
             return BRDF_SAMPLING_RES_PHI_D / 2 - 1;
     }
 
+    void lookup_brdf_index(double *brdf, int d1, int d2, int d3, double &r, double &g, double &b)
+    {
+        if (d1 >= BRDF_SAMPLING_RES_PHI_D / 2)
+            d1 = BRDF_SAMPLING_RES_PHI_D / 2 - 1;
+        if (d2 >= BRDF_SAMPLING_RES_THETA_D)
+            d2 = BRDF_SAMPLING_RES_THETA_D - 1;
+        if (d3 >= BRDF_SAMPLING_RES_THETA_H)
+            d3 = BRDF_SAMPLING_RES_THETA_H - 1;
+        int ind = d1 +
+                  d2 * BRDF_SAMPLING_RES_PHI_D / 2 +
+                  d3 * BRDF_SAMPLING_RES_PHI_D / 2 *
+                  BRDF_SAMPLING_RES_THETA_D;
+        r = brdf[ind] * RED_SCALE;
+        g = brdf[ind + BRDF_SAMPLING_RES_THETA_H * BRDF_SAMPLING_RES_THETA_D * BRDF_SAMPLING_RES_PHI_D / 2] * GREEN_SCALE;
+        b = brdf[ind + BRDF_SAMPLING_RES_THETA_H * BRDF_SAMPLING_RES_THETA_D * BRDF_SAMPLING_RES_PHI_D] * BLUE_SCALE;
+    }
 
 // Given a pair of incoming/outgoing angles, look up the BRDF.
     void lookup_brdf_val(double *brdf, double theta_in, double fi_in,
                          double theta_out, double fi_out,
-                         double &red_val, double &green_val, double &blue_val) {
+                         double &red_val, double &green_val, double &blue_val)
+    {
         // Convert to halfangle / difference angle coordinates
         double theta_half, fi_half, theta_diff, fi_diff;
 
         std_coords_to_half_diff_coords(theta_in, fi_in, theta_out, fi_out,
                                        theta_half, fi_half, theta_diff, fi_diff);
-
 
         // Find index.
         // Note that phi_half is ignored, since isotropic BRDFs are assumed
@@ -206,8 +266,33 @@ namespace BRDF {
 
         if (red_val < 0.0 || green_val < 0.0 || blue_val < 0.0)
             fprintf(stderr, "Below horizon.\n");
-
+/*
+        double dd1 = phi_diff_index_lf(fi_diff);
+        double dd2 = theta_diff_index_lf(theta_diff);
+        double dd3 = theta_half_index_lf(theta_half);
+        int d1 = floor(dd1), d2 = floor(dd2), d3 = floor(dd3);
+        double t1 = dd1 - d1;
+        double t2 = dd2 - d2;
+        double t3 = dd3 - d3;
+        red_val = green_val = blue_val = 0;
+        for (int i = 0; i < 8; ++i) {
+            double r, g, b;
+            int a1 = i & 1;
+            int a2 = (i >> 1) & 1;
+            int a3 = (i >> 2) & 1;
+            int _d1 = d1 + a1;
+            int _d2 = d2 + a2;
+            int _d3 = d3 + a3;
+            lookup_brdf_index(brdf, _d1, _d2, _d3, r, g, b);
+            double t = (a1 ? t1 : 1 - t1) * (a2 ? t2 : 1 - t2) * (a3 ? t3 : 1 - t3);
+            red_val += t * r;
+            green_val += t * g;
+            blue_val += t * b;
+        }
+        if (red_val < 0.0 || green_val < 0.0 || blue_val < 0.0)
+            fprintf(stderr, "Below horizon.\n");*/
     }
+
     /*
         void lookup_brdf_val(double *brdf, double theta_in, double fi_in,
                              double theta_out, double fi_out,
@@ -224,7 +309,8 @@ namespace BRDF {
     */
 
 // Read BRDF data
-    bool read_brdf(const char *filename, double *&brdf) {
+    bool read_brdf(const char *filename, double *&brdf)
+    {
         FILE *f = fopen(filename, "rb");
         if (!f)
             return false;
@@ -233,8 +319,8 @@ namespace BRDF {
         fread(dims, sizeof(int), 3, f);
         int n = dims[0] * dims[1] * dims[2];
         if (n != BRDF_SAMPLING_RES_THETA_H *
-                BRDF_SAMPLING_RES_THETA_D *
-                BRDF_SAMPLING_RES_PHI_D / 2) {
+            BRDF_SAMPLING_RES_THETA_D *
+            BRDF_SAMPLING_RES_PHI_D / 2) {
             fprintf(stderr, "Dimensions don't match\n");
             fclose(f);
             return false;

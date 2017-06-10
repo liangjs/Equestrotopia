@@ -9,6 +9,7 @@
 namespace Equestria
 {
     std::vector<Polygon *> polygon;
+    std::vector<Sphere *> sphere;
     std::map<std::string, int> mtlIndex;
     std::vector<Material> material;
     std::map<std::string, int> txIdx;
@@ -24,6 +25,12 @@ namespace Equestria
             fin >> fname;
             objRead(fname);
         }
+        /*
+        fin >> num; // read spheres
+        for (int i = 0; i < num; ++i) {
+            fin >> fname;
+            sphereRead(fname);
+        }*/
         fin.close();
         for (auto i : mtlIndex) { // read brdf
             bool ok = BRDF::read_brdf((i.first + ".brdf").c_str(), material[i.second].brdf);
@@ -33,7 +40,7 @@ namespace Equestria
             }
         }
     }
-
+/*
     void rotateModel(const std::string &fname)
     {
         FILE *rotfile = fopen(fname.c_str(), "r");
@@ -57,12 +64,19 @@ namespace Equestria
                 bdmin[j] = std::min(bdmin[j], i->bdmin[j]);
                 bdmax[j] = std::max(bdmax[j], i->bdmax[j]);
             }
+        for (auto &i : sphere)
+            for (int j = 0; j < 3; ++j) {
+                bdmin[j] = std::min(bdmin[j], i->center.value[j]);
+                bdmax[j] = std::max(bdmax[j], i->center.value[j]);
+            }
         Point center((bdmin[0] + bdmax[0]) / 2, (bdmin[1] + bdmax[1]) / 2, (bdmin[2] + bdmax[2]) / 2);
 
         for (auto &p : polygon)
             p->rotate(dr, center, axis);
+        for (auto &s : sphere)
+            s->rotate(dr, center, axis);
     }
-
+*/
     typedef std::vector<std::string>::iterator vsi_t;
 
     Point __getObjPoint(vsi_t itb, vsi_t ite)
@@ -252,6 +266,11 @@ namespace Equestria
         fread(tx.buf, sizeof(unsigned char), tx.w * tx.h * 3, fin);
         fclose(fin);
         texture.push_back(tx);
+    }
+
+    void sphereRead(const std::string &file)
+    {
+
     }
 
     Point Material::MTL::getKa(double u, double v)

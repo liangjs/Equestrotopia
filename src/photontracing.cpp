@@ -26,7 +26,7 @@ void readInput(const string &path)
 {
     chdir(path.c_str());
     readModel("list.txt");
-    rotateModel("prerotate.txt");
+    //rotateModel("prerotate.txt");
     ifstream fin("camera.txt");
     fin >> camera.focus >> camera.o >> camera.vx >> camera.vy;
     fin.close();
@@ -37,7 +37,7 @@ void readInput(const string &path)
     fin >> nlight;
     lights.resize(nlight);
     for (int i = 0; i < nlight; ++i)
-        fin >> lights[i].pos >> lights[i].I;
+        fin >> lights[i].pos >> lights[i].I >> lights[i].power;
     fin.close();
 }
 
@@ -73,7 +73,7 @@ Point getSphereRandomPoint(int flag = 0, Point *norm = NULL)
 void ejectphoton(const Light &light, const Point &dir, FILE *file)
 {
     double n1 = 1;
-    Point rgb(light.I * 4 * M_PI);
+    Point rgb(light.I);
     Ray ray(light.pos, dir);
     for (int bounce = 0; bounce < MAXBOUNCES; ++bounce) {
         Polygon *p;
@@ -103,10 +103,11 @@ void ejectphoton(const Light &light, const Point &dir, FILE *file)
         if ((rand() % 10001) / 10000.0 < R) { // reflected
             ray.bgn = pos + addition;
             Point reflectv = getSphereRandomPoint(1, &N);
-            rgb.multiByChannel(material[p->label].BRDF(-ray.vec, reflectv, N));
+            Point brdf = material[p->label].BRDF(-ray.vec, reflectv, N);
+            if (mtl.mapKd != -1)
+                brdf = (brdf + mtl.getKd(u, v)) / 2;
+            rgb.multiByChannel(brdf);
             rgb *= dotsProduct(-ray.vec, N);
-            //if (mtl.mapKa != -1)
-            //    rgb.multiByChannel(mtl.getKd(u, v));
             ray.vec = reflectv;
         }
         else {   // refracted or absorbed
@@ -146,10 +147,10 @@ int main(int argc, char *argv[])
         char str[100];
         sprintf(str, "PhotonMap%d-%d.map", curv, iteration);
         FILE *file = fopen(str, "w");
-        int Nemit = lights.size() * PHOTONSPER;
+        int Nemit = PHOTONSPER;
         fwrite(&Nemit, 4, 1, file);
         for (auto &curlight : lights)
-            for (int i = 0; i < PHOTONSPER; ++i)
+            for (int i = 0; i < curlight.power * PHOTONSPER; ++i)
                 ejectphoton(curlight, getSphereRandomPoint(), file);
         fclose(file);
         puts(str);
