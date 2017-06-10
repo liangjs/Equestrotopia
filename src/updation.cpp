@@ -77,8 +77,8 @@ void loadHitpoints()
         cur.normv.Read(ptr);
         cur.raydir.Read(ptr);
         memcpy(&cur.mtl_label, ptr, 4), ptr = (char *)ptr + 4;
-        memcpy(&cur.u, ptr, 8), ptr = (char*)ptr + 8;
-        memcpy(&cur.v, ptr, 8), ptr = (char*)ptr + 8;
+        memcpy(&cur.u, ptr, 8), ptr = (char *)ptr + 8;
+        memcpy(&cur.v, ptr, 8), ptr = (char *)ptr + 8;
         memcpy(&cur.x, ptr, 4), ptr = (char *)ptr + 4;
         memcpy(&cur.y, ptr, 4), ptr = (char *)ptr + 4;
         cur.wgt.Read(ptr);
@@ -107,7 +107,6 @@ void readfile()
     int N;
     fread(&N, 4, 1, file);
     Nemit += N;
-    filelist.pop_front();
     Photon *curptn = new Photon;
     while (curptn->light.bgn.Read(file) != 0
            && curptn->light.vec.Read(file) != 0
@@ -118,6 +117,8 @@ void readfile()
     }
     delete curptn;
     fclose(file);
+    remove(curfile);
+    filelist.pop_front();
     filelistlock.unlock();
 }
 
@@ -136,13 +137,10 @@ void __updateHit(const vHit_it &bg, const vHit_it &ed, int id)
             double ratio = ht.ptncount / (N + M);
             ht.radius *= sqrt(ratio);
             auto &mt = material[ht.mtl_label];
-            Point Kd = mt.mtl.getKd(ht.u, ht.v);
             for (auto &ptn : nearptns)
                 if (dotsProduct(ptn->light.vec, ht.normv) > EPS) {
-                    Point brdf = mt.BRDF(ptn->light.vec, ht.raydir, ht.normv);
-                    if (mt.mtl.mapKd != -1)
-                        brdf = (brdf + Kd) / 2;
-                    ht.tau += elemMult(ptn->rgb, brdf) * dotsProduct(ptn->light.vec, ht.normv);
+                    Point brdf_cos = mt.BRDF_cos(ptn->light.vec, ht.raydir, ht.normv, ht.u, ht.v);
+                    ht.tau += elemMult(ptn->rgb, brdf_cos);
                 }
             ht.tau *= ratio;
         }
@@ -174,6 +172,7 @@ void updateHitpoints()
         if (now != last) {
             last = now;
             printf("updating hitpoints... %d\n", now);
+            this_thread::sleep_for(chrono::seconds(1));
         }
     }
     while (sum != hits.size());
@@ -209,14 +208,12 @@ void putImage()
             //if (tmp > EPS && i == 0)
             //    tmp = 100;
             //tmp *= Omega_Pixel;
-            if (tmp > 255)
-                tmp = 255;
             tmp *= ht.wgt.value[i];
             dbuf[pos + i] += tmp;
         }
     }
     for (int i = 0; i < WINDOW_HEIGHT * WINDOW_WIDTH * 3; ++i)
-        buf[i] = dbuf[i];
+        buf[i] = min(255.0, dbuf[i]);
     lodepng_encode24_file(str, buf, WINDOW_WIDTH, WINDOW_HEIGHT);
     free(buf);
     free(dbuf);

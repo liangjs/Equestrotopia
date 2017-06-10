@@ -24,6 +24,7 @@ namespace Equestria {
             static int __split(vpolyit begin, vpolyit end, vpolyit& lend, vpolyit& rbegin, double& pos, int splitter);
             static polyKDTree* build(vpolyit begin, vpolyit end);
     };
+    extern polyKDTree *polytree;
 
     class ptnKDTree {
         public:

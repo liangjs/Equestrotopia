@@ -151,9 +151,8 @@ namespace Equestria
         return is >> p.x >> p.y >> p.z;
     }
 
-    Sphere::Sphere(): center(), radius(0) {}
-    Sphere::Sphere(const Point &a, double r): center(a), radius(r) {}
-    Sphere::Sphere(double ox, double oy, double oz, double r): center(ox, oy, oz), radius(r) {}
+    Sphere::Sphere(const Point &a, double r, int label): center(a), radius(r), Object(label) {}
+    //Sphere::Sphere(double ox, double oy, double oz, double r): center(ox, oy, oz), radius(r) {}
 
     Point Sphere::getNormal(const Point &p)const
     {
@@ -166,7 +165,7 @@ namespace Equestria
         center.rotate(dr, o, axis);
     }
 
-    Polygon::Polygon(const Polygon &p): num(p.num), label(p.label), normvf(p.normvf), pList(p.pList), normvList(p.normvList), texList(p.texList)
+    Polygon::Polygon(const Polygon &p): num(p.num), Object(p.label), normvf(p.normvf), pList(p.pList), normvList(p.normvList), texList(p.texList)
     {
         memcpy(bdmin, p.bdmin, sizeof(bdmin));
         memcpy(bdmax, p.bdmax, sizeof(bdmax));
@@ -188,7 +187,7 @@ namespace Equestria
 
     Polygon::Polygon(const std::vector<Point> &pl, const std::vector<Point> &nl,
                      const std::vector<Point> &tl, int lab)
-        : pList(pl), normvList(nl), texList(tl), num(pl.size()), label(lab)
+        : pList(pl), normvList(nl), texList(tl), num(pl.size()), Object(lab)
     {
         xmin = ymin = zmin = INF;
         xmax = ymax = zmax = -INF;
@@ -424,10 +423,14 @@ namespace Equestria
         }
     }
 
-    Point Material::BRDF(const Point &v_in, const Point &v_out, const Point &N)
+    Point Material::BRDF_cos(const Point &v_in, const Point &v_out, const Point &N, double u, double v)
     {
-        if (brdf == NULL)
-            return mtl.Kd;
+        if (brdf == NULL) {
+            Point H = v_in + v_out;
+            H /= H.len();
+            return mtl.getKd(u, v) * dotsProduct(v_in, N)
+                + mtl.Ks * pow(std::max(0.0, dotsProduct(N, H)), mtl.Ns);
+        }
         double theta_in = acos(dotsProduct(v_in, N));
         double theta_out = acos(dotsProduct(v_out, N));
         Point v_in2 = v_in - N * cos(theta_in);
@@ -435,7 +438,10 @@ namespace Equestria
         double phi = acos(dotsProduct(v_in2, v_out2) / v_in2.len() / v_out2.len());
         double r, g, b;
         BRDF::lookup_brdf_val(brdf, theta_in, phi, theta_out, 0, r, g, b);
-        return Point(r, g, b);
+        Point brdf = Point(r, g, b);
+        if (mtl.mapKd != -1)
+            brdf = (brdf + mtl.getKd(u, v)) / 2;
+        return brdf * dotsProduct(v_in, N);
     }
 
     Ray reflect(const Point &p, const Point &N, const Point &I)
@@ -470,4 +476,25 @@ namespace Equestria
         };
         return asr(l, r, simpson(l, r));
     }
+
+    double intersect(const Ray &ray, Point &pos, Point &N, Object *&p)
+    {
+        Polygon *pl;
+        double t = intersect(ray, polytree, pl);
+        p = pl;
+        for (auto &s : sphere) {
+            Point p2;
+            double t2 = intersect(ray, *s, &p2, t);
+            if (t2 < t) {
+                t = t2;
+                p = s;
+            }
+        }
+        if (t != INF) {
+            pos = ray.bgn + t * ray.vec;
+            N = p->getNormal(pos);
+        }
+        return t;
+    }
+
 }

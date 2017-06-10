@@ -57,8 +57,11 @@ namespace Equestria
     class Object
     {
     public:
+        int label; // material index
+        Object(int _label): label(_label) {}
         virtual Point getNormal(const Point &p)const = 0;
         virtual void rotate(double dr, const Point &center, const Point &axis) = 0;
+        virtual void txCoordinate(const Point &p, double &u, double &v)const {}
     };
 
     class Sphere: public Object
@@ -67,9 +70,8 @@ namespace Equestria
         Point center;
         double radius;
 
-        Sphere();
-        Sphere(const Point &, double r);
-        Sphere(double ox, double oy, double oz, double r);
+        Sphere(const Point &, double r, int label);
+        //Sphere(double ox, double oy, double oz, double r);
 
         Point getNormal(const Point &p)const;
         void rotate(double dr, const Point &o, const Point &axis);
@@ -83,7 +85,6 @@ namespace Equestria
         double bdmin[3], bdmax[3];
         double_ref xmin = bdmin[0], ymin = bdmin[1], zmin = bdmin[2], xmax = bdmax[0], ymax = bdmax[1], zmax = bdmax[2];
         int c1, c2, c3; // c1,c2,c3 consist of triangle in polygon with maximum area
-        int label; // material index
         int num; // number of points
         Point normvf;
         std::vector<Point> pList, normvList, texList;
@@ -115,9 +116,10 @@ namespace Equestria
     }
 
     /* return INF if no intersection */
-    double intersect(const Ray &ray, const Sphere &, Point *);
+    double intersect(const Ray &ray, const Sphere &s, Point *p, double lasthit = INF);
     double intersect(const Ray &ray, const Polygon &, Point *, double lasthit = INF);
     double intersect(const Ray &ray, const polyKDTree *, Polygon *&p, double lasthit = INF);
+    double intersect(const Ray &ray, Point &pos, Point &N, Object *&p); // global
 
     Ray reflect(const Point &p, const Point &N, const Point &I);
     Ray refract(const Point &p, double n1, double n2, const Point &N, const Point &I);

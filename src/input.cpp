@@ -25,12 +25,11 @@ namespace Equestria
             fin >> fname;
             objRead(fname);
         }
-        /*
         fin >> num; // read spheres
         for (int i = 0; i < num; ++i) {
             fin >> fname;
             sphereRead(fname);
-        }*/
+        }
         fin.close();
         for (auto i : mtlIndex) { // read brdf
             bool ok = BRDF::read_brdf((i.first + ".brdf").c_str(), material[i.second].brdf);
@@ -270,7 +269,21 @@ namespace Equestria
 
     void sphereRead(const std::string &file)
     {
-
+        std::ifstream fin(file);
+        if (!fin) {
+            std::cerr << "could not read spere file \"" << file << "\"" << std::endl;
+            return;
+        }
+        int n;
+        fin >> n;
+        for (int i = 0; i < n; ++i) {
+            Point c;
+            double r;
+            std::string mtlname;
+            fin >> c >> r >> mtlname;
+            sphere.push_back(new Sphere(c, r, mtlIndex[mtlname]));
+        }
+        fin.close();
     }
 
     Point Material::MTL::getKa(double u, double v)

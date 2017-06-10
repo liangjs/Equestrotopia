@@ -12,6 +12,6 @@ extern const double antiAliasMatrix[SAMPLE_RATE][SAMPLE_RATE];
 
 #define MAXITERATION 10
 
-#define INITRADIUS 0.03
+#define INITRADIUS 1
 
 #endif

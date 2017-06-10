@@ -12,15 +12,13 @@
 using namespace Equestria;
 using namespace std;
 
-polyKDTree *polytree;
 Camera camera;
 vector<Light> lights;
 std::vector<Hitpoint> hits;
 
-void readInput(const string &path)
+void readInput()
 {
     //cout << "reading input ..." << endl;
-    chdir(path.c_str());
     readModel("list.txt");
     //rotateModel("prerotate.txt");
     ifstream fin("camera.txt");
@@ -47,23 +45,18 @@ void build_polyKDTree()
     polytree = new polyKDTree(polygon.begin(), polygon.end());
 }
 
-double intersect(const Ray &ray, Object *p)
-{
-
-}
-
 void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point &wgt, int deep = 0)
 {
     static const int maxdeep = 3;
     if (wgt.len() < 1e-4)
         return;
-    Polygon *p;
-    double t = intersect(ray, polytree, p);
+    Object *p;
+    Point pos, N;
+    double t = intersect(ray, pos, N, p);
     if (t == INF)
         return;
-    Material::MTL &mtl = material[p->label].mtl;
-    Point pos = ray.bgn + t * ray.vec;
-    Point N = p->getNormal(pos);
+    int label = p->label;
+    Material::MTL &mtl = material[label].mtl;
     double Ni = mtl.Ni;
     if (dotsProduct(N, -ray.vec) < 0) { /* go out of the material */
         Ni = 1;
@@ -76,11 +69,8 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
     if (deep < maxdeep) {
         if (dcmp(mtl.Ns, 100) > 0) {/* specular */
             Ray r2(reflect(pos, N, ray.vec));
-            Point brdf = material[p->label].BRDF(r2.vec, -ray.vec, N);
-            if (mtl.mapKd != -1)
-                brdf = (brdf + mtl.getKd(u, v)) / 2;
-            //Point c = Ks + Kd * max(0.0, dotsProduct(N, -ray.vec));
-            RayTracing(r2, n1, pixel_x, pixel_y, elemMult(wgt, brdf)*dotsProduct(N, r2.vec), deep + 1);
+            Point brdf_cos = material[p->label].BRDF_cos(r2.vec, -ray.vec, N, u, v);
+            RayTracing(r2, n1, pixel_x, pixel_y, elemMult(wgt, brdf_cos), deep + 1);
             end = false;
         }
         if (mtl.Tr > EPS) /* transparent */
@@ -95,30 +85,24 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
         hit.position = pos;
         hit.normv = N;
         hit.raydir = -ray.vec;
-        hit.mtl_label = p->label;
+        hit.mtl_label = label;
         hit.u = u, hit.v = v;
         hit.x = pixel_x;
         hit.y = pixel_y;
         hit.wgt = wgt;
         hit.direct = Point(0, 0, 0);
         for (auto &light : lights) {
-            Polygon *tmp;
+            Object *tmp;
             Point L = light.pos - pos;
             if (dotsProduct(L, N) <= EPS) // inside the object, no direct light
                 continue;
-            double tt = intersect(Ray(light.pos, -L), polytree, tmp);
+            Point _pos, _N; 
+            double tt = intersect(Ray(light.pos, -L), _pos, _N, tmp);
             double vlen = L.len();
             if (dcmp(tt, vlen) >= 0) {
                 L /= vlen;
-                //Point H = -ray.vec + L;
-                //H /= H.len();
-                Point brdf = material[p->label].BRDF(L, -ray.vec, N);
-                if (mtl.mapKd != -1)
-                    brdf = (brdf + mtl.getKd(u, v)) / 2;
-                //Point c;
-                //c = Ks * pow(max(0.0, dotsProduct(N, H)), mtl.Ns);
-                //c += Kd * max(0.0, dotsProduct(N, L));
-                hit.direct += elemMult(light.I / sqr(vlen) * light.power, brdf) * dotsProduct(N, L);
+                Point brdf_cos = material[label].BRDF_cos(L, -ray.vec, N, u, v);
+                hit.direct += elemMult(light.I / sqr(vlen) * light.power, brdf_cos);
             }
         }
         hits.push_back(hit);
@@ -198,7 +182,8 @@ int main(int argc, char *argv[])
         return -1;
     }
 
-    readInput(argv[1]);
+    chdir(argv[1]);
+    readInput();
     build_polyKDTree();
 
     Run();

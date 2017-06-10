@@ -44,7 +44,7 @@ namespace Equestria
             Point getKs(double u = 0, double v = 0);
         } mtl;
         Material(): brdf(NULL) {}
-        Point BRDF(const Point &v_in, const Point &v_out, const Point &N);
+        Point BRDF_cos(const Point &v_in, const Point &v_out, const Point &N, double u, double v);
     };
     extern std::vector<Material> material;
 

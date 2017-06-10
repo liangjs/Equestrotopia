@@ -17,7 +17,6 @@
 using namespace Equestria;
 using namespace std;
 
-polyKDTree *polytree;
 Camera camera;
 vector<Light> lights;
 int curv;
@@ -76,11 +75,11 @@ void ejectphoton(const Light &light, const Point &dir, FILE *file)
     Point rgb(light.I);
     Ray ray(light.pos, dir);
     for (int bounce = 0; bounce < MAXBOUNCES; ++bounce) {
-        Polygon *p;
-        double t = intersect(ray, polytree, p);
+        Object *p;
+        Point pos, N;
+        double t = intersect(ray, pos, N, p);
         if (t == INF)
             return;
-        Point pos = ray.bgn + t * ray.vec;
         if (bounce) { // exclude the first hit
             pos.Print(file);
             (-ray.vec).Print(file);
@@ -88,7 +87,6 @@ void ejectphoton(const Light &light, const Point &dir, FILE *file)
             fwrite(&p->label, 4, 1, file);
         }
         Material::MTL &mtl = material[p->label].mtl;
-        Point N = p->getNormal(pos);
         double Ni = mtl.Ni;
         if (dotsProduct(N, -ray.vec) < 0) { // inside object
             Ni = 1;
@@ -103,11 +101,8 @@ void ejectphoton(const Light &light, const Point &dir, FILE *file)
         if ((rand() % 10001) / 10000.0 < R) { // reflected
             ray.bgn = pos + addition;
             Point reflectv = getSphereRandomPoint(1, &N);
-            Point brdf = material[p->label].BRDF(-ray.vec, reflectv, N);
-            if (mtl.mapKd != -1)
-                brdf = (brdf + mtl.getKd(u, v)) / 2;
-            rgb.multiByChannel(brdf);
-            rgb *= dotsProduct(-ray.vec, N);
+            Point brdf_cos = material[p->label].BRDF_cos(-ray.vec, reflectv, N, u, v);
+            rgb.multiByChannel(brdf_cos);
             ray.vec = reflectv;
         }
         else {   // refracted or absorbed
@@ -132,14 +127,13 @@ void ejectphoton(const Light &light, const Point &dir, FILE *file)
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3)
-    {
+    if (argc != 3) {
         printf("Usage: %s <directory> <id>\n", argv[0]);
         return 1;
     }
     sscanf(argv[2], "%d", &curv);
 
-    srand(time(0));
+    srand(time(0)*getpid());
     readInput(argv[1]);
     build_polyKDTree();
 

@@ -11,6 +11,7 @@
 using namespace std;
 
 namespace Equestria {
+    polyKDTree *polytree;
     polyKDTree::polyKDTree(vpolyit _begin, vpolyit _end) {
         poly.assign(_begin, _end);
         vpolyit begin = poly.begin(), end = poly.end();
