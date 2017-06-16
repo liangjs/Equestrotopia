@@ -92,14 +92,12 @@ void ejectphoton(const Light &light, const Point &dir, FILE *file)
             Ni = 1;
             N = -N;
         }
-        Point addition = N * EPS;
-        Point dir2 = ray.vec - 2 * dotsProduct(ray.vec, N) * N;
         double R0 = sqr((n1 - Ni) / (n1 + Ni));
         double R = R0 + (1 - R0) * pow(1 - dotsProduct(N, -ray.vec), 5);
         double u, v;
         p->txCoordinate(pos, u, v);
         if ((rand() % 10001) / 10000.0 < R) { // reflected
-            ray.bgn = pos + addition;
+            ray.bgn = pos + N * EPS;
             Point reflectv = getSphereRandomPoint(1, &N);
             Point brdf_cos = material[p->label].BRDF_cos(-ray.vec, reflectv, N, u, v);
             rgb.multiByChannel(brdf_cos);

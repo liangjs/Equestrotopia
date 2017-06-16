@@ -6,12 +6,12 @@
 #define SAMPLE_RATE 3
 extern const double antiAliasMatrix[SAMPLE_RATE][SAMPLE_RATE];
 
-#define PHOTONSPER 1000000
+#define PHOTONSPER 500000
 
-#define MAXBOUNCES 10
+#define MAXBOUNCES 30
 
-#define MAXITERATION 10
+#define MAXITERATION 500
 
-#define INITRADIUS 1
+#define INITRADIUS_RATIO 0.35
 
 #endif

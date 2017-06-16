@@ -14,7 +14,9 @@ using namespace std;
 
 Camera camera;
 vector<Light> lights;
-std::vector<Hitpoint> hits;
+//std::vector<Hitpoint> hits;
+
+FILE *fout;
 
 void readInput()
 {
@@ -45,9 +47,11 @@ void build_polyKDTree()
     polytree = new polyKDTree(polygon.begin(), polygon.end());
 }
 
+int nhit;
+
 void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point &wgt, int deep = 0)
 {
-    static const int maxdeep = 3;
+    static const int maxdeep = 5;
     if (wgt.len() < 1e-4)
         return;
     Object *p;
@@ -70,7 +74,7 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
         if (dcmp(mtl.Ns, 100) > 0) {/* specular */
             Ray r2(reflect(pos, N, ray.vec));
             Point brdf_cos = material[p->label].BRDF_cos(r2.vec, -ray.vec, N, u, v);
-            RayTracing(r2, n1, pixel_x, pixel_y, elemMult(wgt, brdf_cos), deep + 1);
+            RayTracing(r2, n1, pixel_x, pixel_y, elemMult(wgt, brdf_cos) * (1 - mtl.Tr), deep + 1);
             end = false;
         }
         if (mtl.Tr > EPS) /* transparent */
@@ -80,7 +84,7 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
             }
             catch (std::logic_error) {}
     }
-    if (end) {
+    if (deep * 2 > maxdeep || end) {
         Hitpoint hit;
         hit.position = pos;
         hit.normv = N;
@@ -96,7 +100,7 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
             Point L = light.pos - pos;
             if (dotsProduct(L, N) <= EPS) // inside the object, no direct light
                 continue;
-            Point _pos, _N; 
+            Point _pos, _N;
             double tt = intersect(Ray(light.pos, -L), _pos, _N, tmp);
             double vlen = L.len();
             if (dcmp(tt, vlen) >= 0) {
@@ -105,7 +109,18 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
                 hit.direct += elemMult(light.I / sqr(vlen) * light.power, brdf_cos);
             }
         }
-        hits.push_back(hit);
+        hit.position.Print(fout);
+        hit.normv.Print(fout);
+        hit.raydir.Print(fout);
+        fwrite(&hit.mtl_label, 4, 1, fout);
+        fwrite(&hit.u, 8, 1, fout);
+        fwrite(&hit.v, 8, 1, fout);
+        fwrite(&hit.x, 4, 1, fout);
+        fwrite(&hit.y, 4, 1, fout);
+        hit.wgt.Print(fout);
+        hit.direct.Print(fout);
+        ++nhit;
+        //hits.push_back(hit);
     }
 }
 
@@ -116,7 +131,7 @@ void Run()
     Point _dx = dx / SAMPLE_RATE, _dy = dy / SAMPLE_RATE;
     Point identity(1, 1, 1);
     for (int x = 0; x < WINDOW_HEIGHT; ++x) {
-        //printf("progress: %g\n", (float)x / WINDOW_WIDTH);
+        printf("progress: %g\n", (float)x / WINDOW_WIDTH);
         for (int y = 0; y < WINDOW_WIDTH; ++y) {
             Point center = camera.o + (x - WINDOW_HEIGHT / 2.0 + 0.5) * dx + (y - WINDOW_WIDTH / 2.0 + 0.5) * dy;
             for (int i = 0; i < SAMPLE_RATE; ++i)
@@ -128,7 +143,7 @@ void Run()
     }
 }
 
-#include "lodepng.h"
+//#include "lodepng.h"
 
 void output()
 {
@@ -156,23 +171,23 @@ void output()
     free(buf);
     free(dbuf);
     fclose(fppm);*/
-
-    FILE *file = fopen("hitpoints.txt", "wb");
-    int sz = hits.size();
-    fwrite(&sz, 4, 1, file);
-    for (auto &i : hits) {
-        i.position.Print(file);
-        i.normv.Print(file);
-        i.raydir.Print(file);
-        fwrite(&i.mtl_label, 4, 1, file);
-        fwrite(&i.u, 8, 1, file);
-        fwrite(&i.v, 8, 1, file);
-        fwrite(&i.x, 4, 1, file);
-        fwrite(&i.y, 4, 1, file);
-        i.wgt.Print(file);
-        i.direct.Print(file);
-    }
-    fclose(file);
+    /*
+        FILE *file = fopen("hitpoints.txt", "wb");
+        int sz = hits.size();
+        fwrite(&sz, 4, 1, file);
+        for (auto &i : hits) {
+            i.position.Print(file);
+            i.normv.Print(file);
+            i.raydir.Print(file);
+            fwrite(&i.mtl_label, 4, 1, file);
+            fwrite(&i.u, 8, 1, file);
+            fwrite(&i.v, 8, 1, file);
+            fwrite(&i.x, 4, 1, file);
+            fwrite(&i.y, 4, 1, file);
+            i.wgt.Print(file);
+            i.direct.Print(file);
+        }
+        fclose(file);*/
 }
 
 int main(int argc, char *argv[])
@@ -186,8 +201,14 @@ int main(int argc, char *argv[])
     readInput();
     build_polyKDTree();
 
+    fout = fopen("hitpoints.txt", "wb");
+    fseek(fout, 4, SEEK_SET);
+
     Run();
 
-    output();
+    fseek(fout, 0, SEEK_SET);
+    fwrite(&nhit, 4, 1, fout);
+    //output();
+    fclose(fout);
     return 0;
 }

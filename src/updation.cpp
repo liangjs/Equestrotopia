@@ -65,28 +65,35 @@ void loadHitpoints()
     }
     int n;
     fread(&n, 4, 1, file);
-    void *buf = malloc(148 * n), *ptr = buf;
+    /*void *buf = malloc(148 * n), *ptr = buf;
     if (fread(buf, 148, n, file) != n) {
         fprintf(stderr, "hitpoints error!!!\n");
         exit(1);
     }
-    fclose(file);
+    fclose(file);*/
+    double R0 = INITRADIUS_RATIO * sqrt(camera.vx.len() * camera.vy.len());
     for (int i = 0; i < n; ++i) {
         Hitpoint cur;
-        cur.position.Read(ptr);
-        cur.normv.Read(ptr);
-        cur.raydir.Read(ptr);
-        memcpy(&cur.mtl_label, ptr, 4), ptr = (char *)ptr + 4;
+        cur.position.Read(file);
+        cur.normv.Read(file);
+        cur.raydir.Read(file);
+        fread(&cur.mtl_label, 4, 1, file);
+        fread(&cur.u, 8, 1, file);
+        fread(&cur.v, 8, 1, file);
+        fread(&cur.x, 4, 1, file);
+        fread(&cur.y, 4, 1, file);
+        /*memcpy(&cur.mtl_label, ptr, 4), ptr = (char *)ptr + 4;
         memcpy(&cur.u, ptr, 8), ptr = (char *)ptr + 8;
         memcpy(&cur.v, ptr, 8), ptr = (char *)ptr + 8;
         memcpy(&cur.x, ptr, 4), ptr = (char *)ptr + 4;
-        memcpy(&cur.y, ptr, 4), ptr = (char *)ptr + 4;
-        cur.wgt.Read(ptr);
-        cur.direct.Read(ptr);
-        cur.radius = INITRADIUS;
+        memcpy(&cur.y, ptr, 4), ptr = (char *)ptr + 4;*/
+        cur.wgt.Read(file);
+        cur.direct.Read(file);
+        cur.radius = R0;
         hits.push_back(cur);
     }
-    free(buf);
+    //free(buf);
+    fclose(file);
     printf("hitpoints loaded\n");
 }
 
@@ -222,6 +229,7 @@ void putImage()
 
 void readInput()
 {
+    cout << "reading model..." << endl;
     readModel("list.txt");
     ifstream fin("camera.txt");
     if (!fin.good())
