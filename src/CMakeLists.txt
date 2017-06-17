@@ -8,7 +8,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR}/lodepng)
 add_library(lodepng SHARED lodepng/lodepng.cpp)
 
 ADD_EXECUTABLE(raytracing raytracing.cpp)
-target_link_libraries(raytracing Equestrotopia lodepng)
+target_link_libraries(raytracing Equestrotopia ${CMAKE_THREAD_LIBS_INIT})
 
 ADD_EXECUTABLE(photontracing photontracing.cpp)
 target_link_libraries(photontracing Equestrotopia)
@@ -19,3 +19,6 @@ target_include_directories(updation PUBLIC lodepng)
 
 ADD_EXECUTABLE(place place.cpp)
 target_link_libraries(place Equestrotopia)
+
+ADD_EXECUTABLE(dist dist.cpp)
+target_link_libraries(dist ${CMAKE_THREAD_LIBS_INIT})

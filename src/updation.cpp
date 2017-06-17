@@ -28,32 +28,9 @@ ptnKDTree *ptntree = NULL;
 list<string> filelist;
 vector<Hitpoint> hits;
 vector<Photon *> ptns;
-int totforks = 0;
-int fd2[2];
-mutex filelistlock;
-bool endflag = false;
 int Nemit = 0;
 char cwd[1000];
 Camera camera;
-
-void pushFile(const char *str)
-{
-    filelistlock.lock();
-    //printf("pushFile %s\n", str);
-    filelist.push_back(str);
-    filelistlock.unlock();
-}
-
-void listenTerminal()
-{
-    char line[MAXNLINE];
-    int n;
-    FILE *file = fdopen(fd2[0], "r");
-    while (fscanf(file, "%s", line) != EOF)
-        pushFile(line);
-    printf("listenTerminal done\n");
-    endflag = true;
-}
 
 void loadHitpoints()
 {
@@ -107,7 +84,6 @@ void clearptnlist()
 
 void readfile()
 {
-    filelistlock.lock();
     clearptnlist();
     const char *curfile = filelist.front().c_str();
     FILE *file = fopen(curfile, "r");
@@ -126,7 +102,6 @@ void readfile()
     fclose(file);
     remove(curfile);
     filelist.pop_front();
-    filelistlock.unlock();
 }
 
 int cntHitUpdated[UPDATE_THREADS];
@@ -256,54 +231,20 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    pid_t pid;
-    if (pipe(fd2) < 0)
-        cerr << "pipe error" << endl;
-GO_FORK:
-    if (totforks < MAXFORKS) {
-        if ((pid = fork()) < 0) {
-            cerr << "fork error" << endl;
-            exit(1);
-        }
-        ++totforks;
-    }
-    if (pid > 0) { // parent process
-        if (totforks < MAXFORKS)
-            goto GO_FORK;
-        close(fd2[1]);
+    //puts("runnig raytracing...");
+    //system((string("./raytracing ") + argv[1]).c_str());
+    chdir(argv[1]);
+    readInput();
 
-        //puts("runnig raytracing...");
-        //system((string("./raytracing ") + argv[1]).c_str());
-        chdir(argv[1]);
-        readInput();
+    // need to run RayTracing first
+    loadHitpoints();
+    putImage();
 
-        filelist.clear();
-        thread th(listenTerminal);
-        th.detach();
+    for (int i = 0; i < PHOTON_FORKS; ++i)
+        for (int j = 0; j < MAXITERATION; ++j)
+            filelist.push_back("PhotonMap" + to_string(i) + "-" + to_string(j) + ".map");
 
-        // need to run RayTracing first
-        loadHitpoints();
-        putImage();
-
-        while (!endflag)
-            if (filelist.empty())
-                this_thread::sleep_for(chrono::seconds(1));
-            else
-                update();
-        while (!filelist.empty())
-            update();
-    }
-    else {   // child process
-        close(fd2[0]);
-        if (fd2[1] != STDOUT_FILENO) {
-            if (dup2(fd2[1], STDOUT_FILENO) != STDOUT_FILENO)
-                cerr << "dup2 error to stdout" << endl;
-            close(fd2[1]);
-        }
-        char str[10];
-        sprintf(str, "%d", totforks);
-        if (execl("./photontracing", "photontracing", argv[1], str, (char *)0) < 0)
-            cerr << "execl error" << endl;
-    }
+    while (!filelist.empty())
+        update();
     return 0;
 }
