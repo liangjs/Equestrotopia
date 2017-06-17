@@ -6,8 +6,9 @@
 #include <fstream>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include <GL/glut.h>
+#include <ctime>
+#include <thread>
+#include <mutex>
 
 #include "photontracing.h"
 #include "input.h"
@@ -19,11 +20,9 @@ using namespace std;
 
 Camera camera;
 vector<Light> lights;
-int curv;
 
-void readInput(const string &path)
+void readInput()
 {
-    chdir(path.c_str());
     readModel("list.txt");
     //rotateModel("prerotate.txt");
     ifstream fin("camera.txt");
@@ -45,16 +44,21 @@ void build_polyKDTree()
     polytree = new polyKDTree(polygon.begin(), polygon.end());
 }
 
+double rand_f()
+{
+    return (double)rand() / RAND_MAX;
+}
+
 Point getSphereRandomPoint(int flag = 0, Point *norm = NULL)
 {
     // 0 : whole sphere
     // 1 : semi-sphere
-    double theta = (rand() % 10000) / 5000.0 * M_PI;
-    double z = rand() % 10001;
+    double theta = rand_f() * 2 * M_PI;
+    double z;
     if (flag == 0)
-        (z /= 5000.0) -= 1;
+        z = rand_f() * 2 - 1;
     else if (flag == 1)
-        z /= 10000.0;
+        z = rand_f();
     double x = sqrt(1 - sqr(z)) * cos(theta),
            y = sqrt(1 - sqr(z)) * sin(theta);
     if (!norm || flag == 0)
@@ -69,6 +73,9 @@ Point getSphereRandomPoint(int flag = 0, Point *norm = NULL)
     return z * *norm + x * tx + y * ty;
 }
 
+int nphotons;
+mutex fmutex;
+
 void ejectphoton(const Light &light, const Point &dir, FILE *file)
 {
     double n1 = 1;
@@ -81,10 +88,13 @@ void ejectphoton(const Light &light, const Point &dir, FILE *file)
         if (t == INF)
             return;
         if (bounce) { // exclude the first hit
+            fmutex.lock();
             pos.Print(file);
             (-ray.vec).Print(file);
             rgb.Print(file);
             fwrite(&p->label, 4, 1, file);
+            ++nphotons;
+            fmutex.unlock();
         }
         Material::MTL &mtl = material[p->label].mtl;
         double Ni = mtl.Ni;
@@ -96,7 +106,7 @@ void ejectphoton(const Light &light, const Point &dir, FILE *file)
         double R = R0 + (1 - R0) * pow(1 - dotsProduct(N, -ray.vec), 5);
         double u, v;
         p->txCoordinate(pos, u, v);
-        if ((rand() % 10001) / 10000.0 < R) { // reflected
+        if (rand_f() < R) { // reflected
             ray.bgn = pos + N * EPS;
             Point reflectv = getSphereRandomPoint(1, &N);
             Point brdf_cos = material[p->label].BRDF_cos(-ray.vec, reflectv, N, u, v);
@@ -107,7 +117,7 @@ void ejectphoton(const Light &light, const Point &dir, FILE *file)
             if (mtl.Tr > EPS) {
                 double Prefraction = mtl.Tr;
                 double Pabsorption = 1 - mtl.Tr;
-                if ((rand() % 10001) / 10000.0 < Pabsorption)
+                if (rand_f() < Pabsorption)
                     return; // absorbed
                 try {
                     ray = refract(pos, n1, Ni, N, ray.vec);
@@ -125,25 +135,48 @@ void ejectphoton(const Light &light, const Point &dir, FILE *file)
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3) {
-        printf("Usage: %s <directory> <id>\n", argv[0]);
+    if (argc != 2) {
+        printf("Usage: %s <directory>\n", argv[0]);
         return 1;
     }
-    sscanf(argv[2], "%d", &curv);
 
     srand(time(0)*getpid());
-    readInput(argv[1]);
+    chdir(argv[1]);
+    readInput();
     build_polyKDTree();
 
     for (int iteration = 0; iteration < MAXITERATION; ++iteration) {
         char str[100];
-        sprintf(str, "PhotonMap%d-%d.map", curv, iteration);
+        sprintf(str, "PhotonMap%d.map", iteration);
         FILE *file = fopen(str, "w");
-        int Nemit = PHOTONSPER;
-        fwrite(&Nemit, 4, 1, file);
-        for (auto &curlight : lights)
-            for (int i = 0; i < curlight.power * PHOTONSPER; ++i)
-                ejectphoton(curlight, getSphereRandomPoint(), file);
+        fseek(file, 4, SEEK_SET);
+        nphotons = 0;
+        for (auto &curlight : lights) {
+            int num = curlight.power * PHOTONSPER;
+            vector<thread> ths;
+            mutex nmutex;
+            auto run = [&] {
+                while (1)
+                {
+                    nmutex.lock();
+                    if (num > 0) {
+                        --num;
+                        nmutex.unlock();
+                        ejectphoton(curlight, getSphereRandomPoint(), file);
+                    }
+                    else {
+                        nmutex.unlock();
+                        return;
+                    }
+                }
+            };
+            for (int i = 0; i < RUNTHREADS; ++i)
+                ths.push_back(thread(run));
+            for (auto &th : ths)
+                th.join();
+        }
+        fseek(file, 0, SEEK_SET);
+        fwrite(&nphotons, 4, 1, file);
         fclose(file);
         puts(str);
         fflush(stdout);

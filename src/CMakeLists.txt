@@ -11,14 +11,14 @@ ADD_EXECUTABLE(raytracing raytracing.cpp)
 target_link_libraries(raytracing Equestrotopia ${CMAKE_THREAD_LIBS_INIT})
 
 ADD_EXECUTABLE(photontracing photontracing.cpp)
-target_link_libraries(photontracing Equestrotopia)
+target_link_libraries(photontracing Equestrotopia ${CMAKE_THREAD_LIBS_INIT})
 
 ADD_EXECUTABLE(updation updation.cpp)
 target_link_libraries(updation Equestrotopia lodepng ${CMAKE_THREAD_LIBS_INIT})
 target_include_directories(updation PUBLIC lodepng)
 
-ADD_EXECUTABLE(place place.cpp)
-target_link_libraries(place Equestrotopia)
+#ADD_EXECUTABLE(place place.cpp)
+#target_link_libraries(place Equestrotopia)
 
 ADD_EXECUTABLE(dist dist.cpp)
-target_link_libraries(dist ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(dist)

@@ -9,40 +9,14 @@
 #include <condition_variable>
 using namespace std;
 string path;
-//char cwd[1000];
-void emit_photons()
-{
-    mutex runMutex;
-    condition_variable runCV;
-    int resource = RUNTHREADS;
-    auto run = [&](int id) {
-        {
-            unique_lock<mutex> runLock(runMutex);
-            if (resource > 0)
-                --resource;
-            else {
-                runCV.wait(runLock, [&] {return resource > 0;});
-                --resource;
-            }
-        }
-        system(("./photontracing " + path + " " + to_string(id)).c_str());
-        {
-            unique_lock<mutex> runLock(runMutex);
-            ++resource;
-            runCV.notify_one();
-        }
-    };
-    vector<thread> ths;
-    for (int i = 0; i < PHOTON_FORKS; ++i)
-        ths.push_back(thread(run, i));
-    for (auto &th : ths)
-        th.join();
-}
+char cwd[1000];
 void make_input(int id)
 {
+    chdir(path.c_str());
     FILE *file = fopen("list.txt", "w");
     fprintf(file, "2\nwall.obj\nmeshs.%04d.obj\n0\n", id);
     fclose(file);
+    chdir(cwd);
 }
 int main(int argc, char *argv[])
 {
@@ -50,18 +24,18 @@ int main(int argc, char *argv[])
         puts("Usage: dist <directory>");
         return 1;
     }
-    //getcwd(cwd, sizeof(cwd));
+    getcwd(cwd, sizeof(cwd));
     path = argv[1];
-    for (int i = 0; i < NMESHS; ++i) {
-        printf("running (%d)\n", i);
+    for (int i = 1; i <= NMESHS; ++i) {
+        printf("running meshs %d\n", i);
 
         make_input(i);
 
-        system(("./raytracing " + path).c_str());
+        system(("raytracing " + path).c_str());
 
-        emit_photons();
+        system(("photontracing " + path).c_str());
 
-        system(("./updation " + path).c_str());
+        system(("updation " + path + " meshs" + to_string(i)).c_str());
     }
     return 0;
 }

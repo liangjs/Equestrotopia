@@ -1,4 +1,5 @@
 #include <iostream>
+#include <algorithm>
 #include <fstream>
 #include <cstdio>
 #include <cstdlib>
@@ -71,6 +72,7 @@ void loadHitpoints()
     }
     //free(buf);
     fclose(file);
+    random_shuffle(hits.begin(), hits.end());
     printf("hitpoints loaded\n");
 }
 
@@ -87,20 +89,21 @@ void readfile()
     clearptnlist();
     const char *curfile = filelist.front().c_str();
     FILE *file = fopen(curfile, "r");
+    if (file == NULL)
+        exit(1);
+    Nemit += PHOTONSPER;
     int N;
     fread(&N, 4, 1, file);
-    Nemit += N;
-    Photon *curptn = new Photon;
-    while (curptn->light.bgn.Read(file) != 0
-           && curptn->light.vec.Read(file) != 0
-           && curptn->rgb.Read(file) != 0
-           && fread(&curptn->mtl, 4, 1, file) != 0) {
+    for (int i = 0; i < N; ++i) {
+        Photon *curptn = new Photon;
+        curptn->light.bgn.Read(file);
+        curptn->light.vec.Read(file);
+        curptn->rgb.Read(file);
+        fread(&curptn->mtl, 4, 1, file);
         ptns.push_back(curptn);
-        curptn = new Photon;
     }
-    delete curptn;
     fclose(file);
-    remove(curfile);
+    //remove(curfile);
     filelist.pop_front();
 }
 
@@ -165,11 +168,14 @@ void updateHitpoints()
     ptntree = NULL;
 }
 
-void putImage()
+void putImage(const char *fname = NULL)
 {
     static int id = 0;
     char str[100];
-    sprintf(str, "ppm%d.png", id++);
+    if (fname == NULL)
+        sprintf(str, "ppm%d.png", id++);
+    else
+        sprintf(str, "%s.png", fname);
     unsigned char *buf = (unsigned char *)malloc(WINDOW_WIDTH * WINDOW_HEIGHT * 3);
     double *dbuf = (double *)malloc(8 * WINDOW_WIDTH * WINDOW_HEIGHT * 3);
     memset(dbuf, 0, 8 * WINDOW_WIDTH * WINDOW_HEIGHT * 3);
@@ -179,7 +185,7 @@ void putImage()
         return t * atan(camera.vy.len() / 2 * t);
     });
     printf("%g\n", Omega_Pixel);*/
-    double C = 1 / M_PI / Nemit / camera.vx.len() / camera.vy.len();
+    double C = PHOTON_CONTRIB / M_PI / Nemit;
     for (auto &ht : hits) {
         int pos = ht.x * WINDOW_WIDTH + ht.y;
         pos *= 3;
@@ -194,8 +200,12 @@ void putImage()
             dbuf[pos + i] += tmp;
         }
     }
-    for (int i = 0; i < WINDOW_HEIGHT * WINDOW_WIDTH * 3; ++i)
+    double mxV = 0;
+    for (int i = 0; i < WINDOW_HEIGHT * WINDOW_WIDTH * 3; ++i) {
         buf[i] = min(255.0, dbuf[i]);
+        mxV = max(mxV, dbuf[i]);
+    }
+    //printf("max value = %g\n", mxV);
     lodepng_encode24_file(str, buf, WINDOW_WIDTH, WINDOW_HEIGHT);
     free(buf);
     free(dbuf);
@@ -206,6 +216,7 @@ void readInput()
 {
     cout << "reading model..." << endl;
     readModel("list.txt");
+    polygon.clear();
     ifstream fin("camera.txt");
     if (!fin.good())
         cerr << "camera.txt reading error" << endl;
@@ -226,8 +237,8 @@ void update()
 
 int main(int argc, char *argv[])
 {
-    if (argc != 2) {
-        printf("Usage: %s <directory>\n", argv[0]);
+    if (argc != 3) {
+        printf("Usage: %s <directory> <image>\n", argv[0]);
         return 1;
     }
 
@@ -240,11 +251,12 @@ int main(int argc, char *argv[])
     loadHitpoints();
     putImage();
 
-    for (int i = 0; i < PHOTON_FORKS; ++i)
-        for (int j = 0; j < MAXITERATION; ++j)
-            filelist.push_back("PhotonMap" + to_string(i) + "-" + to_string(j) + ".map");
+    for (int i = 0; i < MAXITERATION; ++i)
+        filelist.push_back("PhotonMap" + to_string(i) + ".map");
 
     while (!filelist.empty())
         update();
+
+    putImage(argv[2]);
     return 0;
 }

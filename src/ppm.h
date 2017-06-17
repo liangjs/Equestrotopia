@@ -10,14 +10,14 @@ extern const double antiAliasMatrix[SAMPLE_RATE][SAMPLE_RATE];
 
 #define MAXBOUNCES 30
 
-#define MAXITERATION 5
+#define MAXITERATION 10
 
 #define INITRADIUS_RATIO 0.45
 
 #define ALPHA 0.65
 
-#define PHOTON_FORKS 2
-
 #define RUNTHREADS 7
+
+#define PHOTON_CONTRIB 20
 
 #endif
