@@ -26,14 +26,16 @@ int main(int argc, char *argv[])
     }
     getcwd(cwd, sizeof(cwd));
     path = argv[1];
-    for (int i = 100; i <= NMESHS; ++i) {
+    int L, R;
+    scanf("%d%d", &L, &R);
+    for (int i = L; i <= R; ++i) {
         printf("running meshs %d\n", i);
 
         make_input(i);
 
-        system(("raytracing " + path).c_str());
+        system(("passes " + path).c_str());
 
-        system(("photontracing " + path).c_str());
+        //system(("photontracing " + path).c_str());
 
         system(("updation " + path + " meshs" + to_string(i)).c_str());
     }
