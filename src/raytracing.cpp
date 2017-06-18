@@ -124,8 +124,8 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
         fwrite(&hit.y, 4, 1, fout);
         hit.wgt.Print(fout);
         hit.direct.Print(fout);
-        fmutex.unlock();
         ++nhit;
+        fmutex.unlock();
         //hits.push_back(hit);
     }
 }

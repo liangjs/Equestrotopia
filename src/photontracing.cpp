@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <ctime>
+#include <random>
 #include <thread>
 #include <mutex>
 
@@ -44,9 +45,14 @@ void build_polyKDTree()
     polytree = new polyKDTree(polygon.begin(), polygon.end());
 }
 
+mutex rmutex;
 double rand_f()
 {
-    return (double)rand() / RAND_MAX;
+    static default_random_engine generator(time(NULL)*getpid());
+    static uniform_real_distribution<double> distribution(0.0,1.0);
+    unique_lock<mutex> randLock(rmutex);
+    return distribution(generator);
+    //return (double)rand() / RAND_MAX;
 }
 
 Point getSphereRandomPoint(int flag = 0, Point *norm = NULL)
@@ -140,7 +146,7 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    srand(time(0)*getpid());
+    //srand(time(0)*getpid());
     chdir(argv[1]);
     readInput();
     build_polyKDTree();
@@ -148,7 +154,7 @@ int main(int argc, char *argv[])
     for (int iteration = 0; iteration < MAXITERATION; ++iteration) {
         char str[100];
         sprintf(str, "PhotonMap%d.map", iteration);
-        FILE *file = fopen(str, "w");
+        FILE *file = fopen(str, "wb");
         fseek(file, 4, SEEK_SET);
         nphotons = 0;
         for (auto &curlight : lights) {
@@ -156,6 +162,7 @@ int main(int argc, char *argv[])
             vector<thread> ths;
             mutex nmutex;
             auto run = [&] {
+                //printf("%g\n", rand_f());
                 while (1)
                 {
                     nmutex.lock();
@@ -179,6 +186,7 @@ int main(int argc, char *argv[])
         fwrite(&nphotons, 4, 1, file);
         fclose(file);
         puts(str);
+        //printf("%d photons\n", nphotons);
         fflush(stdout);
     }
     return 0;

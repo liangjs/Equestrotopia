@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     }
     getcwd(cwd, sizeof(cwd));
     path = argv[1];
-    for (int i = 1; i <= NMESHS; ++i) {
+    for (int i = 100; i <= NMESHS; ++i) {
         printf("running meshs %d\n", i);
 
         make_input(i);

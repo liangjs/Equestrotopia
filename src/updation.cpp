@@ -88,7 +88,7 @@ void readfile()
 {
     clearptnlist();
     const char *curfile = filelist.front().c_str();
-    FILE *file = fopen(curfile, "r");
+    FILE *file = fopen(curfile, "rb");
     if (file == NULL)
         exit(1);
     Nemit += PHOTONSPER;
