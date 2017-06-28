@@ -3,6 +3,9 @@
 #include <iostream>
 #include <algorithm>
 #include <fstream>
+#include <chrono>
+#include <thread>
+#include <mutex>
 
 #include "raytracing.h"
 #include "input.h"
@@ -17,6 +20,7 @@ vector<Light> lights;
 //std::vector<Hitpoint> hits;
 
 FILE *fout;
+mutex fmutex;
 
 void readInput()
 {
@@ -109,6 +113,7 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
                 hit.direct += elemMult(light.I / sqr(vlen) * light.power, brdf_cos);
             }
         }
+        fmutex.lock();
         hit.position.Print(fout);
         hit.normv.Print(fout);
         hit.raydir.Print(fout);
@@ -120,6 +125,7 @@ void RayTracing(const Ray &ray, double n1, int pixel_x, int pixel_y, const Point
         hit.wgt.Print(fout);
         hit.direct.Print(fout);
         ++nhit;
+        fmutex.unlock();
         //hits.push_back(hit);
     }
 }
@@ -130,64 +136,55 @@ void Run()
     Point dy = camera.vy / WINDOW_WIDTH;
     Point _dx = dx / SAMPLE_RATE, _dy = dy / SAMPLE_RATE;
     Point identity(1, 1, 1);
+    struct T {
+        Ray ray;
+        int x, y;
+        Point wgt;
+        T(const Ray &_ray, int _x, int _y, const Point &_wgt)
+            : ray(_ray), x(_x), y(_y), wgt(_wgt) {}
+    };
+    vector<T> v[RAYTRACING_THREADS];
     for (int x = 0; x < WINDOW_HEIGHT; ++x) {
-        printf("progress: %g\n", (float)x / WINDOW_WIDTH);
         for (int y = 0; y < WINDOW_WIDTH; ++y) {
             Point center = camera.o + (x - WINDOW_HEIGHT / 2.0 + 0.5) * dx + (y - WINDOW_WIDTH / 2.0 + 0.5) * dy;
             for (int i = 0; i < SAMPLE_RATE; ++i)
                 for (int j = 0; j < SAMPLE_RATE; ++j) {
                     Point center2 = center + (i - SAMPLE_RATE / 2.0 + 0.5) * _dx + (j - SAMPLE_RATE / 2.0 + 0.5) * _dy;
-                    RayTracing(Ray(center2, center2 - camera.focus), 1, x, y, identity * antiAliasMatrix[i][j]);
+                    static int cnt = 0;
+                    v[cnt++].push_back(T(Ray(center2, center2 - camera.focus), x, y, identity * antiAliasMatrix[i][j]));
+                    cnt %= RAYTRACING_THREADS;
                 }
         }
     }
-}
 
-//#include "lodepng.h"
-
-void output()
-{
-    /*FILE *fppm = fopen("test.ppm", "wb");
-    fprintf(fppm, "P6\n%d %d\n255\n", WINDOW_WIDTH, WINDOW_HEIGHT);
-    unsigned char *buf = (unsigned char *)malloc(WINDOW_WIDTH * WINDOW_HEIGHT * 3);
-    double *dbuf = (double *)malloc(8*WINDOW_WIDTH * WINDOW_HEIGHT * 3);
-    memset(dbuf, 0, 8 * WINDOW_WIDTH * WINDOW_HEIGHT * 3);
-    for (auto &ht : hits) {
-        int pos = ht.x * WINDOW_WIDTH + ht.y;
-        pos *= 3;
-        for (int i = 0; i < 3; ++i) {
-            double tmp = ht.direct.value[i];
-            tmp *= 255;
-            if (tmp > 255)
-                tmp = 255;
-            tmp *= ht.wgt.value[i];
-            dbuf[pos + i] += tmp;
+    vector<thread> ths;
+    int cntRayTraced[RAYTRACING_THREADS] = {};
+    auto run = [&](int id, const vector<T> &v) {
+        for (auto &t : v) {
+            RayTracing(t.ray, 1, t.x, t.y, t.wgt);
+            ++cntRayTraced[id];
+        }
+    };
+    for (int i = 0; i < RAYTRACING_THREADS; ++i)
+        ths.push_back(thread(run, i, v[i]));
+    int sum;
+    int last = -1;
+    const int SUM = WINDOW_HEIGHT * WINDOW_WIDTH * SAMPLE_RATE * SAMPLE_RATE;
+    do {
+        sum = 0;
+        for (int i = 0; i < RAYTRACING_THREADS; ++i)
+            sum += cntRayTraced[i];
+        double rate = sum / (double)SUM;
+        int now = rate * 100;
+        if (now != last) {
+            last = now;
+            printf("raytracing... %d\n", now);
+            this_thread::sleep_for(chrono::seconds(1));
         }
     }
-    for (int i = 0; i < WINDOW_WIDTH * WINDOW_HEIGHT * 3; ++i)
-        buf[i] = dbuf[i];
-    lodepng_encode24_file("test.png", buf, WINDOW_WIDTH, WINDOW_HEIGHT);
-    fwrite(buf, 1, WINDOW_HEIGHT * WINDOW_WIDTH * 3, fppm);
-    free(buf);
-    free(dbuf);
-    fclose(fppm);*/
-    /*
-        FILE *file = fopen("hitpoints.txt", "wb");
-        int sz = hits.size();
-        fwrite(&sz, 4, 1, file);
-        for (auto &i : hits) {
-            i.position.Print(file);
-            i.normv.Print(file);
-            i.raydir.Print(file);
-            fwrite(&i.mtl_label, 4, 1, file);
-            fwrite(&i.u, 8, 1, file);
-            fwrite(&i.v, 8, 1, file);
-            fwrite(&i.x, 4, 1, file);
-            fwrite(&i.y, 4, 1, file);
-            i.wgt.Print(file);
-            i.direct.Print(file);
-        }
-        fclose(file);*/
+    while (sum != SUM);
+    for (auto &th : ths)
+        th.join();
 }
 
 int main(int argc, char *argv[])
@@ -208,7 +205,6 @@ int main(int argc, char *argv[])
 
     fseek(fout, 0, SEEK_SET);
     fwrite(&nhit, 4, 1, fout);
-    //output();
     fclose(fout);
     return 0;
 }

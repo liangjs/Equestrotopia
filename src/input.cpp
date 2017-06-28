@@ -39,43 +39,43 @@ namespace Equestria
             }
         }
     }
-/*
-    void rotateModel(const std::string &fname)
-    {
-        FILE *rotfile = fopen(fname.c_str(), "r");
-        if (rotfile == NULL) {
-            std::cerr << "no rotate file \"" << fname << "\"" << std::endl;
-            return;
+    /*
+        void rotateModel(const std::string &fname)
+        {
+            FILE *rotfile = fopen(fname.c_str(), "r");
+            if (rotfile == NULL) {
+                std::cerr << "no rotate file \"" << fname << "\"" << std::endl;
+                return;
+            }
+            int flag;
+            fscanf(rotfile, "%d", &flag);
+            if (!flag)
+                return;
+            double dr, ax, ay, az;
+            fscanf(rotfile, "%lf%lf%lf%lf", &ax, &ay, &az, &dr);
+            Point axis(ax, ay, az);
+
+            double bdmin[3], bdmax[3];
+            for (int i = 0; i < 3; ++i)
+                bdmin[i] = INF, bdmax[i] = -INF;
+            for (auto &i : polygon)
+                for (int j = 0; j < 3; ++j) {
+                    bdmin[j] = std::min(bdmin[j], i->bdmin[j]);
+                    bdmax[j] = std::max(bdmax[j], i->bdmax[j]);
+                }
+            for (auto &i : sphere)
+                for (int j = 0; j < 3; ++j) {
+                    bdmin[j] = std::min(bdmin[j], i->center.value[j]);
+                    bdmax[j] = std::max(bdmax[j], i->center.value[j]);
+                }
+            Point center((bdmin[0] + bdmax[0]) / 2, (bdmin[1] + bdmax[1]) / 2, (bdmin[2] + bdmax[2]) / 2);
+
+            for (auto &p : polygon)
+                p->rotate(dr, center, axis);
+            for (auto &s : sphere)
+                s->rotate(dr, center, axis);
         }
-        int flag;
-        fscanf(rotfile, "%d", &flag);
-        if (!flag)
-            return;
-        double dr, ax, ay, az;
-        fscanf(rotfile, "%lf%lf%lf%lf", &ax, &ay, &az, &dr);
-        Point axis(ax, ay, az);
-
-        double bdmin[3], bdmax[3];
-        for (int i = 0; i < 3; ++i)
-            bdmin[i] = INF, bdmax[i] = -INF;
-        for (auto &i : polygon)
-            for (int j = 0; j < 3; ++j) {
-                bdmin[j] = std::min(bdmin[j], i->bdmin[j]);
-                bdmax[j] = std::max(bdmax[j], i->bdmax[j]);
-            }
-        for (auto &i : sphere)
-            for (int j = 0; j < 3; ++j) {
-                bdmin[j] = std::min(bdmin[j], i->center.value[j]);
-                bdmax[j] = std::max(bdmax[j], i->center.value[j]);
-            }
-        Point center((bdmin[0] + bdmax[0]) / 2, (bdmin[1] + bdmax[1]) / 2, (bdmin[2] + bdmax[2]) / 2);
-
-        for (auto &p : polygon)
-            p->rotate(dr, center, axis);
-        for (auto &s : sphere)
-            s->rotate(dr, center, axis);
-    }
-*/
+    */
     typedef std::vector<std::string>::iterator vsi_t;
 
     Point __getObjPoint(vsi_t itb, vsi_t ite)
@@ -158,6 +158,24 @@ namespace Equestria
                         }
                     }
                 }
+                // trans water mesh begin
+                if (file.substr(0, 6) == "meshs.") {
+                    const double scale = 0.0017151092877468969;
+                    const double dx = -0.0903571092877469, dy = 0.07075589071225309, dz = 0.11598439835300356;
+                    if (material == -1)
+                        material = mtlIndex["Water"];
+                    Point N = crossProduct(pl[1] - pl[0], pl[2] - pl[0]);
+                    N /= N.len();
+                    std::swap(N.y, N.z), N.z = -N.z;
+                    for (auto &p : pl) {
+                        p = p * scale;
+                        std::swap(p.y, p.z);
+                        p.z = -p.z;
+                        p.x += dx, p.y += dy, p.z += dz;
+                    }
+                    nl[0] = nl[1] = nl[2] = N;
+                }
+                // trans water mesh end
                 polygon.push_back(new Polygon(pl, nl, tl, material));
             }
             else if (op == "mtllib") { // external .mtl file
