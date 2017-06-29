@@ -20,8 +20,8 @@ target_include_directories(updation PUBLIC lodepng)
 #ADD_EXECUTABLE(place place.cpp)
 #target_link_libraries(place Equestrotopia)
 
-ADD_EXECUTABLE(dist dist.cpp)
-target_link_libraries(dist)
+#ADD_EXECUTABLE(dist dist.cpp)
+#target_link_libraries(dist)
 
 ADD_EXECUTABLE(passes passes.cpp)
 target_link_libraries(passes Equestrotopia ${CMAKE_THREAD_LIBS_INIT})
