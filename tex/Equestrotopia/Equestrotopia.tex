@@ -57,17 +57,42 @@ Photon Mapping作为全局光照领域的主流算法，以其高效率，能处
 光子映射)，采用多遍的绘制流程，通过不断向场景中发射光子达到不断减小偏差的%
 目的，亦解决了Photon Mapping的存储问题。
 \section{环境}
-Arch Linux x86\_64 Linux 4.10.13-1-ARCH\par
-gcc (GCC) 6.3.1 20170306\par
-cmake version 3.8.0\par
-GNU Make 4.2.1\par
-OpenGL version: 3.0 Mesa 17.0.5\par
-\section{运行}
+Linux/Windows (仅在Archlinux与Windows7环境下做过测试)\par
+支持c++11的编译器\par
+GNU toolchain\par
+cmake >= 2.8\par
+\section{编译与运行}
 \begin{minted}{shell}
+     $ cd <directory_of_Equestrotopia>
      $ cmake .
      $ make 
-     $ ./updation .
 \end{minted}
+
+这样会在bin目录下产生raytracing,photontracing,passes,updation四个可执行文件，以及Equestrotopia和lodepng两个动态连接库文件。\par
+四个可执行文件的作用可由名称看出，passes是raytracing和photontracing的结合版。\par
+四个可执行文件的使用方法都是在命令行参数里指定一个目录的名称。\par
+该目录下应包含物体列表文件list.txt，光源参数文件light.txt，摄像机参数文件camera.txt，以及list.txt中列出的obj格式的文件和球体文件，和obj文件里列出的mtl格式的文件。\par
+list.txt文件格式：
+\begin{itemize}
+    \small \setlength{\itemsep}{.1em}
+    \item 第一行，一个整数n，表示接下来obj格式的文件的数目
+    \item 接下来n行，每行一个obj格式的文件的文件名
+    \item 接下来一行，一个整数m，表示球体文件数目
+    \item 接下来m行，每行一个球体文件的文件名
+\end{itemize}
+light.txt文件格式：
+\begin{itemize}
+    \small \setlength{\itemsep}{.1em}
+    \item 第一行，一个整数n，表示接下来光源的个数
+    \item 接下来n行，每行7个实数，分别为该光源的坐标x,y,z，该光源的颜色r,g,b（大小一般为255左右），该光源的强度p（大小一般为1左右）。
+\end{itemize}
+camera.txt文件格式：
+\begin{itemize}
+    \small \setlength{\itemsep}{.1em}
+    \item 第一行，三个实数，表示摄像机焦点坐标。
+    \item 第二行，三个实数，表示摄像机镜头中心坐标。
+    \item 第三行与第四行，分别有三个实数，表示摄像机镜头（屏幕坐标系）坐标轴的方向vx,vy，vx与vy两个向量的长度表示镜头大小。
+\end{itemize}
 \section{流程与算法}
 本作业参考了三篇论文\cite{ppm}\cite{ppr}\cite{lirui}，以及书\cite{pm}和Stanford CS148课件，%
 综合效果和实现难度进行了调整，%
