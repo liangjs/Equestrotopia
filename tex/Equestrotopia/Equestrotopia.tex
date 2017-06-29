@@ -19,6 +19,7 @@
 \usepackage[ruled]{algorithm2e}
 \usepackage{ntheorem}
 \usepackage{pgfplots}
+\usepackage{verbatim}
 
 \hypersetup{hidelinks}
 \pgfplotsset{width=8cm}
@@ -39,12 +40,19 @@ breaksymbolright=\small\carriagereturn
 }
 \numberwithin{thmdef}{section}
 
-
-\title{Progressive Photon Mapping\\ \large ---计算机图形学大作业报告}
-\author{吴克文\ 梁家硕}
-\date{2017年5月}
 \begin{document}
-\maketitle
+\begin{titlepage}
+    \mbox{}
+    \vskip 8 cm
+    \centering
+    \Huge Progressive Photon Mapping\\ \huge ---计算机图形学大作业报告
+
+    \rule{\textwidth}{1pt}\par % Thick horizontal line
+
+    \Large 吴克文\ 梁家硕
+
+    \large 2017年6月
+\end{titlepage}
 \tableofcontents
 \newpage
 \section{综述}
@@ -56,12 +64,11 @@ Photon Mapping作为全局光照领域的主流算法，以其高效率，能处
 为此，Toshiya Hachisuka提出了Progressive Photon Mapping(又称渐进式%
 光子映射)，采用多遍的绘制流程，通过不断向场景中发射光子达到不断减小偏差的%
 目的，亦解决了Photon Mapping的存储问题。
-\section{环境}
+\section{编译与运行环境}
 Linux/Windows (仅在Archlinux与Windows7环境下做过测试)\par
 支持c++11的编译器\par
 GNU toolchain\par
 cmake >= 2.8\par
-\section{编译与运行}
 \begin{minted}{shell}
      $ cd <directory_of_Equestrotopia>
      $ cmake .
@@ -93,12 +100,14 @@ camera.txt文件格式：
     \item 第二行，三个实数，表示摄像机镜头中心坐标。
     \item 第三行与第四行，分别有三个实数，表示摄像机镜头（屏幕坐标系）坐标轴的方向vx,vy，vx与vy两个向量的长度表示镜头大小。
 \end{itemize}
+raytracing会在指定目录下产生hitpoints.txt文件，记录hitpoint信息。\par
+photontracing会在指定目录下产生形如PhotonMap1.map的文件，记录光子信息。\par
+updation会读取这些文件，产生一些png格式的图片。
 \section{流程与算法}
-本作业参考了三篇论文\cite{ppm}\cite{ppr}\cite{lirui}，以及书\cite{pm}和Stanford CS148课件，%
-综合效果和实现难度进行了调整，%
-删去了繁琐的细节调整和性能优化部分。\\
-注：\par
-BRDF参数及读取代码来自网站\url{http://www.merl.com/brdf/}。\\
+本作业参考了三篇论文\cite{ppm}\cite{ppr}\cite{lirui}，以及书\cite{pm}和Stanford CS148课件。\par
+BRDF参数及读取代码来自网站\url{http://www.merl.com/brdf/}\par
+png图片相关代码来自网站\url{http://lodev.org/lodepng/}
+\\
 \begin{algorithm}[H]
 \caption{Progressive Photon Mapping}
 \LinesNumbered
@@ -118,9 +127,10 @@ Perform \textit{Ray Tracing Pass} to restore hitpoints\;
 }
 Generate output.png using hitpoints' info.\;
 \end{algorithm}\par
+
 \begin{figure}[!h]
 \centering
-\includegraphics[width=0.7\textwidth]{./overall.png}
+\includegraphics[width=0.7\textwidth]{overall}
 \end{figure}
 以下为详细算法剖分：
 \subsection{Lighting Equation}
@@ -246,6 +256,7 @@ L(\mathbf{x},\omega)
 +\Vert\mathbf{v}\Vert^2x^2=0
 \end{equation}\par
 再取最小正值$x$带入，即得交点。
+\begin{comment}
 \listingscaption{Ray \& Sphere}
 \begin{minted}{c++}
 // return INF if no intersection
@@ -268,6 +279,7 @@ double intersect(const Ray &ray, const Sphere &s, Point *p, double lasthit){
     return res;
 }
 \end{minted}
+\end{comment}
 \subsection{射线与空间凸多边形的求交算法}
 多边形所在平面可用任意三点表示，又考虑到精度问题，便在初始化多边形时选取%
 多边形上构成三角形面积最大的三点$\mathbf{c_1},\mathbf{c_2},\mathbf{c_3}$。%
@@ -304,6 +316,7 @@ yz=\mathbf{c'}_y\mathbf{c''}_z-\mathbf{c'}_z\mathbf{c''}_y
 \mathbf{n},\mathbf{d}})\\
 &\geqslant 0
 \end{align}
+\begin{comment}
 \listingscaption{Ray \& Polygon}
 \begin{minted}{c++}
 // return INF if no intersection
@@ -332,6 +345,7 @@ double intersect(const Ray &ray, const Polygon &s, Point *p, double lasthit){
     return t;
 }
 \end{minted}
+\end{comment}
 \subsection{射线与KD-Tree节点立方体的判交算法}
 经过尝试，传统KD-Tree在片元较多时光线判交复杂度过大，难以胜任，故我们改进了%
 传统KD-Tree建法：\par
@@ -356,7 +370,7 @@ $z_{min},z_{max}$。用起点$\mathbf{s}$和向量$\mathbf{v}$表示射线$l$，
 然后将交点与$\mathbf{c}$的距离与$\mathbf{s}$到中子树的最短距离$x'$进行比较，若已短于$x'$则%
 不必判中子树与右子树，直接返回，反之则再与中子树判交，再考虑右子树。%
 同理可得$\mathbf{c}$在分界面右侧的情况。\par
-还可以加上射线方向性的剪枝。考虑$\mathbf{c}$在分界面左侧，且%
+还可以加上射线方向性的剪枝。不妨考虑$\mathbf{c}$在分界面左侧，若有%
 $\mathbf{v}_t\leqslant 0$，则显然$l$不会与右子树有交。值得一提的是，此时%
 $l$与左子树有交并不能保证它就是最近交点，因为左包围盒与中包围盒有交时情况较为%
 复杂，如下图所示：
@@ -403,15 +417,31 @@ $l$与左子树有交并不能保证它就是最近交点，因为左包围盒�
 \end{center}\par
 上图中绿色平面为分界面，红色面在中子树中，蓝色面在左子树中，%
 黑色的射线从上而下。射线与整个包围盒的交点在左子树，故先求得射线与%
-（左子树）蓝色面的交点，但是，它与中子树（红色面）的交点才是最近点。\\
-注：\par
-为了压常数，代码写的不是很可读，在此略去。
+（左子树）蓝色面的交点，但是，它与中子树（红色面）的交点才是最近点。
+\section{并行计算}
+该算法具有高度的并行性，若能被充分利用，可很大程度上提高运行效率。
+\begin{enumerate}
+\item Ray Tracing Pass 中，从屏幕发出的每条光线互不相干。
+\item Photon Tracing Pass 中，每个光子互不相干。
+\item Progressive Updation 时，每个hitpoint互不相干。
+\end{enumerate}
 \section{效果展示}
+\newcommand{\mygraph}[2]{
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{#1}
+  \caption{#2}
+\end{figure}
+}
+\mygraph{box2}{PPM原作者的场景}
+\mygraph{specular}{镜面球体}
+\mygraph{cyan_glass}{透明球体}
+\mygraph{water}{水}
 \section{总结}
+\textbf{\color{red}总结有待补充}
 本算法还有诸多可以提高的空间，例如：
 \begin{enumerate}
 \item 引入凹凸纹理贴图
-\item 并行计算优化效率
 \item Stochastic Progressive Photon Mapping及其他进阶算法
 \end{enumerate}\par
 限于时间、精力，无法进一步探索，实属遗憾。
