@@ -89,25 +89,20 @@
 {\begin{alertblock}{#1}}}
 {\end{alertblock}}
 
+\newcommand{\mygraph}[2]{
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{#1}
+  \caption{#2}
+\end{figure}
+}
+
 \title{Progressive Photon Mapping}
 \author{吴克文\ 梁家硕}
-\date{2017年5月}
+\date{2017年6月}
 
 \begin{document}
 \frame{\titlepage}
-
-\begin{frame}
-\begin{green}[综述]
-本作业参考了三篇论文\cite{ppm}\cite{ppr}\cite{lirui}，以及书\cite{pm}和Stanford CS148课件，%
-综合效果和实现难度进行了调整，%
-删去了繁琐的细节调整和性能优化部分。\\
-BRDF参数及代码来自网站\url{http://www.merl.com/brdf/}\vspace{10pt}\\
-\pause
-更多技术细节详见Equestrotopia.pdf和src文件夹中的代码\\
-以及Github仓库\url{https://github.com/liangjs/Equestrotopia}
-\vspace{0.2em}\
-\end{green}
-\end{frame}
 
 \begin{frame}
 \tableofcontents
@@ -130,8 +125,10 @@ Photon Mapping作为全局光照领域的主流算法，以其高效率，能处
 
 \section{效果展示}
 \frame{\sectionpage}
-\begin{frame}
-\end{frame}
+\frame{\mygraph{box2}{PPM原作者的场景}}
+\frame{\mygraph{specular}{镜面球体}}
+\frame{\mygraph{cyan_glass}{透明球体}}
+\frame{\mygraph{water}{水}}
 
 \section{环境与使用}
 \begin{frame}[fragile]
@@ -145,9 +142,9 @@ cmake >= 2.8\par
 \begin{blue}[使用]
 \vspace{-10pt}
 \begin{verbatim}
-$ cmake .
-$ make 
-$ ./updation
+$ raytracing <directory>
+$ photontracing <directory>
+$ updation <directory>
 \end{verbatim}
 \end{blue}
 \end{frame}
@@ -320,6 +317,17 @@ L(\mathbf{x},\omega)
 \section{参考文献}
 \begin{frame}[allowframebreaks]
 \bibliography{EquReport}
+\end{frame}
+
+\begin{frame}
+\begin{blue}[其它参考]
+BRDF参数及代码来自网站\ \url{http://www.merl.com/brdf/}
+png图片相关代码来自\ \url{http://lodev.org/lodepng/}
+\end{blue}
+\begin{green}[更多]
+更多技术细节详见Equestrotopia.pdf和src文件夹中的代码\\
+以及Github仓库\ \url{https://github.com/liangjs/Equestrotopia}
+\end{green}
 \end{frame}
 
 \section*{Thanks}
