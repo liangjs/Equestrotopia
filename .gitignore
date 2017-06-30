@@ -1,3 +1,19 @@
+# TeX Compile Files
+tex/EquReport/*.aux
+tex/EquReport/*.log
+tex/EquReport/*.nav
+tex/EquReport/*.out
+tex/EquReport/*.snm
+tex/EquReport/*.toc
+tex/EquReport/*.vrb
+tex/Equestrotpia/*.aux
+tex/Equestrotpia/*.log
+tex/Equestrotpia/*.nav
+tex/Equestrotpia/*.out
+tex/Equestrotpia/*.snm
+tex/Equestrotpia/*.toc
+tex/Equestrotpia/*.vrb
+
 # Compiled Object files
 *.slo
 *.lo

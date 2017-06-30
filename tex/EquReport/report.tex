@@ -9,7 +9,6 @@
 \usepackage{graphicx}
 \usepackage{ctex}
 \usepackage{amsmath,amssymb,amsfonts}
-\usepackage{txfonts}
 \usepackage{multicol}
 \usepackage{bm}
 \usepackage{extarrows}
@@ -17,6 +16,16 @@
 \usepackage{hyperref}
 \usepackage{comment}
 \usepackage{xifthen}
+\usepackage{tikz,mathpazo}
+
+
+\usetikzlibrary{shapes.geometric, arrows}
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm,text centered, draw=black, fill=red!30, font=\bf]
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30, font=\bf]
+\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30, font=\bf]
+\tikzstyle{decision} = [diamond, minimum width=2.5cm, minimum height=1cm, text centered, draw=black, fill=green!30, font=\bf]
+\tikzstyle{arrow} = [thick,->,>= stealth]
+\tikzstyle{line} = [thick]
 
 \newcommand\ppar[1]{\left( #1 \right)}
 \newcommand\abs[1]{\vert #1 \vert}
@@ -39,35 +48,26 @@
 \definecolor{nonpkupurple}{HTML}{9370DB}
 
 \setbeamercolor{structure}{fg=pkured}
-
 \setbeamercolor{normal text}{fg=black,bg=white}
 \setbeamercolor{alerted text}{fg=nonpkugreen!67!yellow,bg=white}
 \setbeamercolor{example text}{fg=nonpkublue,bg=white}
-
 \setbeamercolor{palette primary}{fg=pkuredblack,bg=gray!20}
 \setbeamercolor{palette secondary}{fg=pkuredblack,bg=pkuredgray!20}
 \setbeamercolor{palette tertiary}{fg=gray!10,bg=pkured!90}
 \setbeamercolor{palette quaternary}{fg=gray!10,bg=pkured}
-
 \setbeamercolor{titlelike}{parent=palette quaternary}
-
 \setbeamercolor{frametitle}{fg=gray!10}
-
 \setbeamercolor{block title}{fg=gray!10,bg=pkured}
 \setbeamercolor{block title alerted}{use=alerted text,fg=gray!10,bg=nonpkugreen!75!bg}
 \setbeamercolor{block title example}{use=example text,fg=gray!10,bg=nonpkublue!75!bg}
-
 \setbeamercolor{block body}{parent=normal text,use=block title,bg=block title.bg!25!bg}
 \setbeamercolor{block body alerted}{parent=normal text,use=block title alerted,bg=block title alerted.bg!25!bg}
 \setbeamercolor{block body example}{parent=normal text,use=block title example,bg=block title example.bg!25!bg}
-
 \setbeamercolor{sidebar}{bg=pkured!90}
-  
 \setbeamercolor{palette sidebar primary}{fg=gray!10}
 \setbeamercolor{palette sidebar secondary}{fg=pkured!20}
 \setbeamercolor{palette sidebar tertiary}{fg=pkured!20}
 \setbeamercolor{palette sidebar quaternary}{fg=gray!10}
-
 \setbeamercolor*{separation line}{}
 \setbeamercolor*{fine separation line}{}
 
@@ -151,6 +151,33 @@ $ updation <directory>
 
 \section{总流程}
 \frame{\sectionpage}
+
+\begin{frame}
+\centering
+\scalebox{0.75}{%
+\begin{tikzpicture}[node distance=1.5cm]
+\node (start) [startstop] {Start};
+\node (in1) [io, below of=start, yshift=-1cm] {Input};
+\node (pro1) [process, right of=in1, xshift=2cm] {RayTracing};
+\node (dec1) [decision, right of=pro1, xshift=2cm] {Iterations};
+\node (pro2a) [process, right of=dec1, xshift=2cm] {PhotonTracing};
+\node (pro2b) [process, above of=pro2a, yshift=0.5cm] {Updation};
+\node (out1) [io, below of=dec1, yshift=-0.75cm] {Output};
+\node (stop) [startstop, below of=out1] {Stop};
+ 
+\draw [arrow](start) -- (in1);
+\draw [arrow](in1) -- (pro1);
+\draw [arrow](pro1) -- (dec1);
+\draw [arrow](dec1) -- (pro2a);
+\draw [arrow](pro2a) -- (pro2b);
+\draw [arrow](dec1) -- (pro2a);
+\draw [arrow](dec1) -- node[left]{Done} (out1);
+\draw [arrow](pro2b) -| (dec1);
+\draw [arrow](out1) -- (stop);
+\end{tikzpicture}}
+\end{frame}
+
+\begin{comment}
 \begin{frame}
 \scalebox{1}{%
 \begin{algorithm}[H]
@@ -172,6 +199,7 @@ $ updation <directory>
 生成渲染图片\;
 \end{algorithm}}
 \end{frame}
+\end{comment}
 
 \section{核心算法}
 \subsection{Lighting Equation}
@@ -184,10 +212,11 @@ BRDF(双向反射分布函数), 全称为Bidirectional Reflectance Distribution 
 \end{blue}\pause
 \begin{green}[光照方程]
 \vspace{-10pt}
-\begin{equation}
-L_o(\mathbf{x},\omega_o)=L_e(\mathbf{x},\omega_o)+\int_\Omega BRDF(\mathbf{x},\omega_i,%
+\begin{align}
+\nonumber L_o(\mathbf{x},\omega_o)&=L_e(\mathbf{x},\omega_o)\\
+&+\int_\Omega BRDF(\mathbf{x},\omega_i,%
 \omega_o)L_i(\mathbf{x},\omega_i)(\omega_i\cdot\mathbf{n})\mathop{d\!}\omega_i
-\end{equation}\\
+\end{align}\\
 其中，$L_e$为直接光照，$\mathbf{x}$为空间坐标，$\mathbf{n}$为平面法向量，%
 $\omega_o,\omega_i$分别为出射和入射方向。
 \end{green}
@@ -204,6 +233,36 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 \end{green}
 \end{frame}
 
+\begin{frame}
+\centering
+\scalebox{0.71}{%
+\begin{tikzpicture}[node distance=1.5cm]
+\node (start) [startstop] {Start};
+\node (in) [io, below of=start, yshift=-1cm] {Input};
+\node (cam) [decision, right of=in, xshift=2cm] {CameraPixels};
+\node (sec) [process, right of=cam, xshift=2cm] {Intersection};
+\node (spe) [decision, right of=sec, xshift=2cm] {Specular};
+\node (out) [io, below of=cam, yshift=-1.25cm] {Output};
+\node (stop) [startstop, below of=out] {Stop};
+\coordinate (p1) at (10.5cm, 0.3cm);
+\coordinate (p2) at (13cm, -2.5cm);
+\coordinate (p3) at (13cm, 1cm);
+
+\draw [arrow](start) -- (in);
+\draw [arrow](in) -- (cam);
+\draw [arrow](cam) -- (sec);
+\draw [arrow](sec) -- (spe);
+\draw [line](spe) -- node[right]{Yes} (p1);
+\draw [arrow](p1) -| (sec);
+\draw [line](spe) -- node[below]{No} (p2);
+\draw [line](p2) -- (p3);
+\draw [arrow](p3) -| (cam);
+\draw [arrow](cam) -- node[left]{Done} (out);
+\draw [arrow](out) -- (stop);
+\end{tikzpicture}}
+\end{frame}
+
+\begin{comment}
 \begin{frame}
 \vspace{-3pt}
 \scalebox{0.9}{%
@@ -228,6 +287,7 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 返回撞击点列表和初始图片\;
 \end{algorithm}}
 \end{frame}
+\end{comment}
 
 \subsection{Photon Tracing Pass}
 \frame{\subsectionpage}
@@ -243,6 +303,39 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 \end{green}
 \end{frame}
 
+\begin{frame}
+\centering
+\scalebox{0.71}{%
+\begin{tikzpicture}[node distance=1.5cm]
+\node (start) [startstop] {Start};
+\node (in) [io, below of=start, yshift=-1cm] {Input};
+\node (light) [decision, right of=in, xshift=2cm] {Lights};
+\node (ptn) [decision, right of=light, xshift=2cm] {EjectPhotons};
+\node (trc) [process, right of=ptn, xshift=2cm] {Tracing};
+\node (abs) [decision, below of=trc, yshift=-1cm] {Absorbed};
+\node (out) [io, below of=light, yshift=-1cm] {Output};
+\node (stop) [startstop, below of=out] {Stop};
+\coordinate (p1) at (13cm, -5cm);
+\coordinate (p2) at (7cm, 0cm);
+\coordinate (p3) at (7cm, -5cm);
+
+\draw [arrow](start) -- (in);
+\draw [arrow](in) -- (light);
+\draw [arrow](light) -- (ptn);
+\draw [arrow](light) -- node[left]{Done} (out);
+\draw [arrow](out) -- (stop);
+\draw [arrow](ptn) -- (trc);
+\draw [arrow](trc) -- (abs);
+\draw [line](abs) -- node[below]{Yes} (p3);
+\draw [arrow](p3) -- (ptn);
+\draw [line](abs) -- node[below]{No}(p1);
+\draw [arrow](p1) |- (trc);
+\draw [line](ptn) -- node[right]{Done} (p2);
+\draw [arrow](p2) -| (light);
+\end{tikzpicture}}
+\end{frame}
+
+\begin{comment}
 \begin{frame}
 \scalebox{1}{%
 \begin{algorithm}[H]
@@ -265,6 +358,7 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 返回光子图\;
 \end{algorithm}}
 \end{frame}
+\end{comment}
 
 \subsection{Progressive Updation}
 \frame{\subsectionpage}
@@ -299,10 +393,10 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 \begin{blue}[推导]
 再记总发射光子数为$N_{emitted}$，$\phi$为光子光强，则最终辐照率表达式为，
 \begin{align}
-L(\mathbf{x},\omega)
+\nonumber L(\mathbf{x},\omega)
 &=\int_{2\pi}BRDF(\mathbf{x},\omega,\omega')L(\mathbf{x},\omega')%
 (\mathbf{n}\cdot\omega')\mathop(d\!)\omega'\\
-&\approx \frac{1}{\Delta A}\sum_{p=1}^{n}BRDF(\mathbf{x},\omega,%
+\nonumber &\approx \frac{1}{\Delta A}\sum_{p=1}^{n}BRDF(\mathbf{x},\omega,%
 \omega')\Delta\phi_p(\mathbf{x_p},\omega_p)\\
 &=\frac{1}{\pi R(\mathbf{x})^2}\frac{\tau(\mathbf{x},\omega)}{N_{emitted}}
 \end{align}
