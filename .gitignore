@@ -6,13 +6,19 @@ tex/EquReport/*.out
 tex/EquReport/*.snm
 tex/EquReport/*.toc
 tex/EquReport/*.vrb
-tex/Equestrotpia/*.aux
-tex/Equestrotpia/*.log
-tex/Equestrotpia/*.nav
-tex/Equestrotpia/*.out
-tex/Equestrotpia/*.snm
-tex/Equestrotpia/*.toc
-tex/Equestrotpia/*.vrb
+tex/EquReport/*.bbl
+tex/EquReport/*.blg
+tex/EquReport/*.synctex.gz
+tex/Equestrotopia/*.aux
+tex/Equestrotopia/*.log
+tex/Equestrotopia/*.nav
+tex/Equestrotopia/*.out
+tex/Equestrotopia/*.snm
+tex/Equestrotopia/*.toc
+tex/Equestrotopia/*.vrb
+tex/Equestrotopia/*.bbl
+tex/Equestrotopia/*.blg
+tex/Equestrotopia/*.synctex.gz
 
 # Compiled Object files
 *.slo

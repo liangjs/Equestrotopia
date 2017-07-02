@@ -8,7 +8,7 @@
 
 \usepackage{graphicx}
 \usepackage{ctex}
-\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{amsmath}
 \usepackage{multicol}
 \usepackage{bm}
 \usepackage{extarrows}
@@ -17,13 +17,13 @@
 \usepackage{comment}
 \usepackage{xifthen}
 \usepackage{tikz,mathpazo}
-
+\usepackage{txfonts}
 
 \usetikzlibrary{shapes.geometric, arrows}
-\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm,text centered, draw=black, fill=red!30, font=\bf]
-\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30, font=\bf]
-\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30, font=\bf]
-\tikzstyle{decision} = [diamond, minimum width=2.5cm, minimum height=1cm, text centered, draw=black, fill=green!30, font=\bf]
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm,text centered, draw=black, fill=red!30]
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30]
+\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30]
+\tikzstyle{decision} = [diamond, minimum width=2.5cm, minimum height=1cm, text centered, draw=black, fill=green!30]
 \tikzstyle{arrow} = [thick,->,>= stealth]
 \tikzstyle{line} = [thick]
 
@@ -93,7 +93,7 @@
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.6\textwidth]{#1}
-  \caption{\tt #2}
+  \caption{\texttt{#2}}
 \end{figure}
 }
 
@@ -108,10 +108,10 @@
 \tableofcontents
 \end{frame}
 
-\section{PPM\ vs\ PM}
+\section{Features}
 \frame{\sectionpage}
 \begin{frame}
-\begin{blue}[Why Progressive Photon Mapping]
+\begin{blue}[PPM vs PM]
 Photon Mapping作为全局光照领域的主流算法，以其高效率，能处理多种光照效果%
 等特点，一直受到广泛的关注。\\\pause
 然而，Photon Mapping算法的一个主要问题在于，使用光子进行光能估计的过程引入%
@@ -121,6 +121,21 @@ Photon Mapping作为全局光照领域的主流算法，以其高效率，能处
 光子映射)，采用多遍的绘制流程，通过不断向场景中发射光子达到不断减小偏差的%
 目的，亦解决了Photon Mapping的存储问题。
 \end{blue}
+\end{frame}
+
+\begin{frame}
+\begin{red}[What's new]
+\vspace{-5pt}
+\begin{itemize}
+\item 支持Linux，后推出Windows版本
+\item 使用扩展版KD-Tree维护场景
+\item 利用KD-Tree加速邻近点查找
+\item 多线程
+\item 同时支持BRDF参数和Phong方程
+\item 支持贴图
+\item 支持真球体
+\end{itemize}
+\end{red}
 \end{frame}
 
 \section{效果展示}
@@ -154,7 +169,6 @@ Linux/Windows\par
 GNU toolchain\par
 cmake >= 2.8\par
 \end{green}
-\pause
 \begin{blue}[使用]
 \vspace{-10pt}
 \begin{verbatim}
@@ -172,14 +186,14 @@ $ updation <directory>
 \centering
 \scalebox{0.75}{%
 \begin{tikzpicture}[node distance=1.5cm]
-\node (start) [startstop] {Start};
-\node (in1) [io, below of=start, yshift=-1cm] {Input};
-\node (pro1) [process, right of=in1, xshift=2cm] {RayTracing};
-\node (dec1) [decision, right of=pro1, xshift=2cm] {Iterations};
-\node (pro2a) [process, right of=dec1, xshift=2cm] {PhotonTracing};
-\node (pro2b) [process, above of=pro2a, yshift=0.5cm] {Updation};
-\node (out1) [io, below of=dec1, yshift=-0.75cm] {Output};
-\node (stop) [startstop, below of=out1] {Stop};
+\node (start) [startstop] {$\bm{\mathrm{Start}}$};
+\node (in1) [io, below of=start, yshift=-1cm] {$\bm{\mathrm{Input}}$};
+\node (pro1) [process, right of=in1, xshift=2cm] {$\bm{\mathrm{RayTracing}}$};
+\node (dec1) [decision, right of=pro1, xshift=2cm] {$\bm{\mathrm{Iterations}}$};
+\node (pro2a) [process, right of=dec1, xshift=2cm] {$\bm{\mathrm{PhotonTracing}}$};
+\node (pro2b) [process, above of=pro2a, yshift=0.5cm] {$\bm{\mathrm{Updation}}$};
+\node (out1) [io, below of=dec1, yshift=-0.75cm] {$\bm{\mathrm{Output}}$};
+\node (stop) [startstop, below of=out1] {$\bm{\mathrm{Stop}}$};
  
 \draw [arrow](start) -- (in1);
 \draw [arrow](in1) -- (pro1);
@@ -225,7 +239,7 @@ $ updation <directory>
 BRDF(双向反射分布函数), 全称为Bidirectional Reflectance Distribution Function，%
 用来定义给定入射方向上的辐射照度如何影响给定出射方向上的辐射率。%
 更笼统地说，它描述了入射光线经过某个表面反射后在各个出射方向上的分布效果。
-\end{blue}\pause
+\end{blue}
 \begin{green}[光照方程]
 \vspace{-10pt}
 \begin{align}
@@ -243,7 +257,7 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 \begin{frame}
 \begin{blue}[光线追踪]
 从观察点出发，通过光线追踪来获得可见点(hitpoints)，同时计算直接光照的贡献。
-\end{blue}\pause
+\end{blue}
 \begin{green}[注]
 在镜面较多的场景中可用反（折）射次数作为阈值强制结束Ray Tracing Pass。
 \end{green}
@@ -253,13 +267,13 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 \centering
 \scalebox{0.71}{%
 \begin{tikzpicture}[node distance=1.5cm]
-\node (start) [startstop] {Start};
-\node (in) [io, below of=start, yshift=-1cm] {Input};
-\node (cam) [decision, right of=in, xshift=2cm] {CameraPixels};
-\node (sec) [process, right of=cam, xshift=2cm] {Intersection};
-\node (spe) [decision, right of=sec, xshift=2cm] {Specular};
-\node (out) [io, below of=cam, yshift=-1.25cm] {Output};
-\node (stop) [startstop, below of=out] {Stop};
+\node (start) [startstop] {$\bm{\mathrm{Start}}$};
+\node (in) [io, below of=start, yshift=-1cm] {$\bm{\mathrm{Input}}$};
+\node (cam) [decision, right of=in, xshift=2cm] {$\bm{\mathrm{CameraPixels}}$};
+\node (sec) [process, right of=cam, xshift=2cm] {$\bm{\mathrm{Intersection}}$};
+\node (spe) [decision, right of=sec, xshift=2cm] {$\bm{\mathrm{Specular}}$};
+\node (out) [io, below of=cam, yshift=-1.25cm] {$\bm{\mathrm{Output}}$};
+\node (stop) [startstop, below of=out] {$\bm{\mathrm{Stop}}$};
 \coordinate (p1) at (10.5cm, 0.3cm);
 \coordinate (p2) at (13cm, -2.5cm);
 \coordinate (p3) at (13cm, 1cm);
@@ -312,7 +326,7 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 每轮Photon Tracing Pass，从光源随机方向发射一批光子，追踪每个光子的运动轨迹，%
 考虑到效率，将光子能量的衰减用随机被物体表面吸收（或达到折反射阈值）来控制，%
 这样每个光子的能量即为定值，折反射仅改变其颜色向量（通过BRDF计算）。
-\end{blue}\pause
+\end{blue}
 \begin{green}[注]
 由于直接光源已在Ray Tracing Pass计算过，故每个光子与场景的第一个交点%
 不必计入photon map。
@@ -323,14 +337,14 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 \centering
 \scalebox{0.71}{%
 \begin{tikzpicture}[node distance=1.5cm]
-\node (start) [startstop] {Start};
-\node (in) [io, below of=start, yshift=-1cm] {Input};
-\node (light) [decision, right of=in, xshift=2cm] {Lights};
-\node (ptn) [decision, right of=light, xshift=2cm] {EjectPhotons};
-\node (trc) [process, right of=ptn, xshift=2cm] {Tracing};
-\node (abs) [decision, below of=trc, yshift=-1cm] {Absorbed};
-\node (out) [io, below of=light, yshift=-1cm] {Output};
-\node (stop) [startstop, below of=out] {Stop};
+\node (start) [startstop] {$\bm{\mathrm{Start}}$};
+\node (in) [io, below of=start, yshift=-1cm] {$\bm{\mathrm{Input}}$};
+\node (light) [decision, right of=in, xshift=2cm] {$\bm{\mathrm{Lights}}$};
+\node (ptn) [decision, right of=light, xshift=2cm] {$\bm{\mathrm{EjectPhotons}}$};
+\node (trc) [process, right of=ptn, xshift=2cm] {$\bm{\mathrm{Tracing}}$};
+\node (abs) [decision, below of=trc, yshift=-1cm] {$\bm{\mathrm{Absorbed}}$};
+\node (out) [io, below of=light, yshift=-1cm] {$\bm{\mathrm{Output}}$};
+\node (stop) [startstop, below of=out] {$\bm{\mathrm{Stop}}$};
 \coordinate (p1) at (13cm, -5cm);
 \coordinate (p2) at (7cm, 0cm);
 \coordinate (p3) at (7cm, -5cm);
@@ -382,7 +396,7 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 \begin{green}[更新模型]
 结束Photon Tracing Pass后，需要枚举每个hitpoint，同时统计其半径$R$内光子%
 对其亮度影响。
-\end{green}\pause
+\end{green}
 \begin{blue}[推导]
 记$N(\mathbf{x})$为上轮后在hitpoint $\mathbf{x}$半径$R(\mathbf{x})$内的光子数，$M(\mathbf{x})$为本次新增光子数，%
 同时$\hat{N}(\mathbf{x}),\hat{R}(\mathbf{x})$分别为新累计光子数和半径，则有如下更新，
@@ -401,21 +415,12 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 \tau_{\hat{N}}(\mathbf{x},\omega)=(\tau_N(\mathbf{x},\omega)+\tau_M(\mathbf{x},\omega))%
 \frac{N(\mathbf{x})+\alpha M(\mathbf{x})}{N(\mathbf{x})+M(\mathbf{x})}
 \end{equation}\par
-其中，$\alpha\in(0,1)$是一常数。
-\end{blue}
-\end{frame}
-
-\begin{frame}
-\begin{blue}[推导]
+其中，$\alpha\in(0,1)$是一常数。\\
 再记总发射光子数为$N_{emitted}$，$\phi$为光子光强，则最终辐照率表达式为，
-\begin{align}
-\nonumber L(\mathbf{x},\omega)
-&=\int_{2\pi}BRDF(\mathbf{x},\omega,\omega')L(\mathbf{x},\omega')%
-(\mathbf{n}\cdot\omega')\mathop(d\!)\omega'\\
-\nonumber &\approx \frac{1}{\Delta A}\sum_{p=1}^{n}BRDF(\mathbf{x},\omega,%
-\omega')\Delta\phi_p(\mathbf{x_p},\omega_p)\\
-&=\frac{1}{\pi R(\mathbf{x})^2}\frac{\tau(\mathbf{x},\omega)}{N_{emitted}}
-\end{align}
+\begin{equation}
+L(\mathbf{x},\omega)\approx%
+\frac{1}{\pi R(\mathbf{x})^2}\frac{\tau(\mathbf{x},\omega)}{N_{emitted}}
+\end{equation}
 \end{blue}
 \end{frame}
 
@@ -426,6 +431,7 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 
 \begin{frame}
 \begin{blue}[其它参考]
+\nocite{pm}\nocite{ppr}\nocite{ppm}\nocite{lirui}
 BRDF参数及代码来自网站\ \url{http://www.merl.com/brdf/}
 png图片相关代码来自\ \url{http://lodev.org/lodepng/}
 \end{blue}
