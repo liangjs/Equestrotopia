@@ -79,11 +79,13 @@ cmake >= 2.8\par
 四个可执行文件的作用可由名称看出，passes是raytracing和photontracing的结合版。\par
 使用方法：
 \begin{minted}{shell}
+    $ raytracing <directory>
     $ photontracing <directory>
     $ updation <directory> <picture_name>
 \end{minted}
 四个可执行文件的使用方法都是在命令行参数里指定一个目录的名称。\par
-该目录下应包含物体列表文件list.txt，光源参数文件light.txt，摄像机参数文件camera.txt，光子贡献比例文件photon\_contrib.txt，以及list.txt中列出的obj格式的文件和球体文件，和obj文件里列出的mtl格式的文件。\\
+该目录下应包含物体列表文件list.txt，光源参数文件light.txt，摄像机参数文件camera.txt，光子贡献比例文件photon\_contrib.txt，以及list.txt中列出的obj格式的文件和球体文件，和obj文件里列出的mtl格式的文件。
+\vspace{10pt}\\
 list.txt文件格式：
 \begin{itemize}
     \small \setlength{\itemsep}{.1em}
