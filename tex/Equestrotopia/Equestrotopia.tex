@@ -78,7 +78,7 @@ cmake >= 2.8\par
 这样会在bin目录下产生raytracing,photontracing,passes,updation四个可执行文件，以及Equestrotopia和lodepng两个动态连接库文件。\par
 四个可执行文件的作用可由名称看出，passes是raytracing和photontracing的结合版。\par
 四个可执行文件的使用方法都是在命令行参数里指定一个目录的名称。\par
-该目录下应包含物体列表文件list.txt，光源参数文件light.txt，摄像机参数文件camera.txt，光子贡献比例文件photon\_contrib.txt，以及list.txt中列出的obj格式的文件和球体文件，和obj文件里列出的mtl格式的文件。\par
+该目录下应包含物体列表文件list.txt，光源参数文件light.txt，摄像机参数文件camera.txt，光子贡献比例文件photon\_contrib.txt，以及list.txt中列出的obj格式的文件和球体文件，和obj文件里列出的mtl格式的文件。\\
 list.txt文件格式：
 \begin{itemize}
     \small \setlength{\itemsep}{.1em}
@@ -111,8 +111,8 @@ photon\_contrib.txt文件格式
     \small \setlength{\itemsep}{.1em}
     \item 一个实数，表示光子对场景光亮度的贡献。（通常50--500较为合适）
 \end{itemize}
-raytracing会在指定目录下产生hitpoints.txt文件，记录hitpoint信息。\par
-photontracing会在指定目录下产生形如PhotonMap1.map的文件，记录光子信息。\par
+raytracing会在指定目录下产生hitpoints.txt文件，记录hitpoint信息。\\
+photontracing会在指定目录下产生形如PhotonMap1.map的文件，记录光子信息。\\
 updation会读取这些文件，产生一些png格式的图片。
 \section{流程与算法}
 本作业参考了三篇论文\cite{ppm}\cite{ppr}\cite{lirui}，以及书\cite{pm}和Stanford CS148课件。\par
@@ -143,7 +143,7 @@ Generate output.png using hitpoints' info.\;
 \centering
 \includegraphics[width=0.7\textwidth]{overall}
 \end{figure}
-以下为详细算法剖分：
+以下为详细算法介绍：
 \subsection{Lighting Equation}
 \begin{thmdef}
 BRDF(双向反射分布函数), 全称为Bidirectional Reflectance Distribution Function，%
@@ -449,10 +449,11 @@ $l$与左子树有交并不能保证它就是最近交点，因为左包围盒�
 \mygraph{cyan_glass}{透明球体}
 \mygraph{water}{水}
 \section{总结}
-\textbf{\color{red}总结有待补充}
-本算法还有诸多可以提高的空间，例如：
+虽然效果不错，但本算法还有诸多可以提高的空间，例如：
 \begin{enumerate}
-\item 引入凹凸纹理贴图
+\small \setlength{\itemsep}{.1em}
+\item GPU编程加速
+\item 分布式优化
 \item Stochastic Progressive Photon Mapping及其他进阶算法
 \end{enumerate}\par
 限于时间、精力，无法进一步探索，实属遗憾。

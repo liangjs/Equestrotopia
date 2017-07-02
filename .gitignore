@@ -8,6 +8,7 @@ tex/EquReport/*.toc
 tex/EquReport/*.vrb
 tex/EquReport/*.bbl
 tex/EquReport/*.blg
+tex/EquReport/*.thm
 tex/EquReport/*.synctex.gz
 tex/Equestrotopia/*.aux
 tex/Equestrotopia/*.log
@@ -18,7 +19,9 @@ tex/Equestrotopia/*.toc
 tex/Equestrotopia/*.vrb
 tex/Equestrotopia/*.bbl
 tex/Equestrotopia/*.blg
+tex/Equestrotopia/*.thm
 tex/Equestrotopia/*.synctex.gz
+tex/Equestrotopia/_minted*
 
 # Compiled Object files
 *.slo
