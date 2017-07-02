@@ -17,13 +17,14 @@
 \usepackage{comment}
 \usepackage{xifthen}
 \usepackage{tikz,mathpazo}
-\usepackage{txfonts}
+\usepackage{newtxtext}
+\usepackage{newtxmath}
 
 \usetikzlibrary{shapes.geometric, arrows}
-\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm,text centered, draw=black, fill=red!30]
-\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30]
-\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30]
-\tikzstyle{decision} = [diamond, minimum width=2.5cm, minimum height=1cm, text centered, draw=black, fill=green!30]
+\tikzstyle{startstop} = [rectangle, rounded corners, minimum width=2.5cm, minimum height=1cm,text centered, draw=black, fill=red!30, font=\bf]
+\tikzstyle{io} = [trapezium, trapezium left angle=70, trapezium right angle=110, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=blue!30, font=\bf]
+\tikzstyle{process} = [rectangle, minimum width=3cm, minimum height=1cm, text centered, draw=black, fill=orange!30, font=\bf]
+\tikzstyle{decision} = [diamond, minimum width=2.5cm, minimum height=1cm, text centered, draw=black, fill=green!30, font=\bf]
 \tikzstyle{arrow} = [thick,->,>= stealth]
 \tikzstyle{line} = [thick]
 
@@ -188,14 +189,14 @@ $ updation <directory>
 \centering
 \scalebox{0.75}{%
 \begin{tikzpicture}[node distance=1.5cm]
-\node (start) [startstop] {$\bm{\mathrm{Start}}$};
-\node (in1) [io, below of=start, yshift=-1cm] {$\bm{\mathrm{Input}}$};
-\node (pro1) [process, right of=in1, xshift=2cm] {$\bm{\mathrm{RayTracing}}$};
-\node (dec1) [decision, right of=pro1, xshift=2cm] {$\bm{\mathrm{Iterations}}$};
-\node (pro2a) [process, right of=dec1, xshift=2cm] {$\bm{\mathrm{PhotonTracing}}$};
-\node (pro2b) [process, above of=pro2a, yshift=0.5cm] {$\bm{\mathrm{Updation}}$};
-\node (out1) [io, below of=dec1, yshift=-0.75cm] {$\bm{\mathrm{Output}}$};
-\node (stop) [startstop, below of=out1] {$\bm{\mathrm{Stop}}$};
+\node (start) [startstop] {Start};
+\node (in1) [io, below of=start, yshift=-1cm] {Input};
+\node (pro1) [process, right of=in1, xshift=2cm] {RayTracing};
+\node (dec1) [decision, right of=pro1, xshift=2cm] {Iterations};
+\node (pro2a) [process, right of=dec1, xshift=2cm] {PhotonTracing};
+\node (pro2b) [process, above of=pro2a, yshift=0.5cm] {Updation};
+\node (out1) [io, below of=dec1, yshift=-0.75cm] {Output};
+\node (stop) [startstop, below of=out1] {Stop};
  
 \draw [arrow](start) -- (in1);
 \draw [arrow](in1) -- (pro1);
@@ -271,13 +272,13 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 \centering
 \scalebox{0.71}{%
 \begin{tikzpicture}[node distance=1.5cm]
-\node (start) [startstop] {$\bm{\mathrm{Start}}$};
-\node (in) [io, below of=start, yshift=-1cm] {$\bm{\mathrm{Input}}$};
-\node (cam) [decision, right of=in, xshift=2cm] {$\bm{\mathrm{CameraPixels}}$};
-\node (sec) [process, right of=cam, xshift=2cm] {$\bm{\mathrm{Intersection}}$};
-\node (spe) [decision, right of=sec, xshift=2cm] {$\bm{\mathrm{Specular}}$};
-\node (out) [io, below of=cam, yshift=-1.25cm] {$\bm{\mathrm{Output}}$};
-\node (stop) [startstop, below of=out] {$\bm{\mathrm{Stop}}$};
+\node (start) [startstop] {Start};
+\node (in) [io, below of=start, yshift=-1cm] {Input};
+\node (cam) [decision, right of=in, xshift=2cm] {CameraPixels};
+\node (sec) [process, right of=cam, xshift=2cm] {Intersection};
+\node (spe) [decision, right of=sec, xshift=2cm] {Specular};
+\node (out) [io, below of=cam, yshift=-1.25cm] {Output};
+\node (stop) [startstop, below of=out] {Stop};
 \coordinate (p1) at (10.5cm, 0.3cm);
 \coordinate (p2) at (13cm, -2.5cm);
 \coordinate (p3) at (13cm, 1cm);
@@ -341,14 +342,14 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 \centering
 \scalebox{0.71}{%
 \begin{tikzpicture}[node distance=1.5cm]
-\node (start) [startstop] {$\bm{\mathrm{Start}}$};
-\node (in) [io, below of=start, yshift=-1cm] {$\bm{\mathrm{Input}}$};
-\node (light) [decision, right of=in, xshift=2cm] {$\bm{\mathrm{Lights}}$};
-\node (ptn) [decision, right of=light, xshift=2cm] {$\bm{\mathrm{EjectPhotons}}$};
-\node (trc) [process, right of=ptn, xshift=2cm] {$\bm{\mathrm{Tracing}}$};
-\node (abs) [decision, below of=trc, yshift=-1cm] {$\bm{\mathrm{Absorbed}}$};
-\node (out) [io, below of=light, yshift=-1cm] {$\bm{\mathrm{Output}}$};
-\node (stop) [startstop, below of=out] {$\bm{\mathrm{Stop}}$};
+\node (start) [startstop] {Start};
+\node (in) [io, below of=start, yshift=-1cm] {Input};
+\node (light) [decision, right of=in, xshift=2cm] {Lights};
+\node (ptn) [decision, right of=light, xshift=2cm] {EjectPhotons};
+\node (trc) [process, right of=ptn, xshift=2cm] {Tracing};
+\node (abs) [decision, below of=trc, yshift=-1cm] {Absorbed};
+\node (out) [io, below of=light, yshift=-1cm] {Output};
+\node (stop) [startstop, below of=out] {Stop};
 \coordinate (p1) at (13cm, -5cm);
 \coordinate (p2) at (7cm, 0cm);
 \coordinate (p3) at (7cm, -5cm);
