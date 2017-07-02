@@ -78,7 +78,7 @@ cmake >= 2.8\par
 这样会在bin目录下产生raytracing,photontracing,passes,updation四个可执行文件，以及Equestrotopia和lodepng两个动态连接库文件。\par
 四个可执行文件的作用可由名称看出，passes是raytracing和photontracing的结合版。\par
 四个可执行文件的使用方法都是在命令行参数里指定一个目录的名称。\par
-该目录下应包含物体列表文件list.txt，光源参数文件light.txt，摄像机参数文件camera.txt，以及list.txt中列出的obj格式的文件和球体文件，和obj文件里列出的mtl格式的文件。\par
+该目录下应包含物体列表文件list.txt，光源参数文件light.txt，摄像机参数文件camera.txt，光子贡献比例文件photon\_contrib.txt，以及list.txt中列出的obj格式的文件和球体文件，和obj文件里列出的mtl格式的文件。\par
 list.txt文件格式：
 \begin{itemize}
     \small \setlength{\itemsep}{.1em}
@@ -99,6 +99,17 @@ camera.txt文件格式：
     \item 第一行，三个实数，表示摄像机焦点坐标。
     \item 第二行，三个实数，表示摄像机镜头中心坐标。
     \item 第三行与第四行，分别有三个实数，表示摄像机镜头（屏幕坐标系）坐标轴的方向vx,vy，vx与vy两个向量的长度表示镜头大小。
+\end{itemize}
+球体文件格式：
+\begin{itemize}
+    \small \setlength{\itemsep}{.1em}
+    \item 第一行，一个整数，表示球体个数。
+    \item 接下来n行，每行4个实数和一个字符串，分别为该球体的三维坐标、半径、材质名称。
+\end{itemize}
+photon\_contrib.txt文件格式
+\begin{itemize}
+    \small \setlength{\itemsep}{.1em}
+    \item 一个实数，表示光子对场景光亮度的贡献。（通常50--500较为合适）
 \end{itemize}
 raytracing会在指定目录下产生hitpoints.txt文件，记录hitpoint信息。\par
 photontracing会在指定目录下产生形如PhotonMap1.map的文件，记录光子信息。\par

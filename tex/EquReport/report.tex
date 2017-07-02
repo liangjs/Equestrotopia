@@ -93,7 +93,7 @@
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.6\textwidth]{#1}
-  \caption{#2}
+  \caption{\tt #2}
 \end{figure}
 }
 
@@ -125,10 +125,26 @@ Photon Mapping作为全局光照领域的主流算法，以其高效率，能处
 
 \section{效果展示}
 \frame{\sectionpage}
-\frame{\mygraph{box2}{PPM原作者的场景}}
-\frame{\mygraph{specular}{镜面球体}}
-\frame{\mygraph{cyan_glass}{透明球体}}
-\frame{\mygraph{water}{水}}
+\frame{\mygraph{box2_ppm0}{PPM原作者的场景 0}}
+\frame{\mygraph{box2_ppm1}{PPM原作者的场景 1}}
+\frame{\mygraph{box2_ppm5}{PPM原作者的场景 5}}
+\frame{\mygraph{box2_ppm10}{PPM原作者的场景 10}}
+\frame{\mygraph{box2}{PPM原作者的场景 100 (33'13'')}}
+\frame{\mygraph{specular_ppm0}{镜面球体 0}}
+\frame{\mygraph{specular_ppm1}{镜面球体 1}}
+\frame{\mygraph{specular_ppm5}{镜面球体 5}}
+\frame{\mygraph{specular_ppm10}{镜面球体 10}}
+\frame{\mygraph{specular}{镜面球体 100 (6'56'')}}
+\frame{\mygraph{cyan_ppm0}{透明球体 0}}
+\frame{\mygraph{cyan_ppm1}{透明球体 1}}
+\frame{\mygraph{cyan_ppm5}{透明球体 5}}
+\frame{\mygraph{cyan_ppm10}{透明球体 10}}
+\frame{\mygraph{cyan_glass}{透明球体 100 (9'13'')}}
+\frame{\mygraph{water_ppm0}{水 0}}
+\frame{\mygraph{water_ppm1}{水 1}}
+\frame{\mygraph{water_ppm5}{水 5}}
+\frame{\mygraph{water_ppm10}{水 10}}
+\frame{\mygraph{water}{水 100 (23'05'')}}
 
 \section{环境与使用}
 \begin{frame}[fragile]
@@ -401,11 +417,6 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 &=\frac{1}{\pi R(\mathbf{x})^2}\frac{\tau(\mathbf{x},\omega)}{N_{emitted}}
 \end{align}
 \end{blue}
-\end{frame}
-
-\section{阶段性效果图比较}
-\frame{\sectionpage}
-\begin{frame}
 \end{frame}
 
 \section{参考文献}

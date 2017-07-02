@@ -10,7 +10,7 @@ extern const double antiAliasMatrix[SAMPLE_RATE][SAMPLE_RATE];
 
 #define MAXBOUNCES 30
 
-#define MAXITERATION 15
+#define MAXITERATION 100
 
 #define INITRADIUS_RATIO 0.45
 
@@ -18,6 +18,6 @@ extern const double antiAliasMatrix[SAMPLE_RATE][SAMPLE_RATE];
 
 #define RUNTHREADS 7
 
-#define PHOTON_CONTRIB 20
+extern double PHOTON_CONTRIB;
 
 #endif

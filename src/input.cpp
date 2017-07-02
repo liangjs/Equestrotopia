@@ -289,7 +289,7 @@ namespace Equestria
     {
         std::ifstream fin(file);
         if (!fin) {
-            std::cerr << "could not read spere file \"" << file << "\"" << std::endl;
+            std::cerr << "could not read sphere file \"" << file << "\"" << std::endl;
             return;
         }
         int n;

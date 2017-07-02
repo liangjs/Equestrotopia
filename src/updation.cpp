@@ -224,6 +224,9 @@ void readInput()
     fin.close();
     camera.normal = camera.o - camera.focus;
     camera.normal /= camera.normal.len();
+    fin.open("photon_contrib.txt");
+    fin >> PHOTON_CONTRIB;
+    fin.close();
 }
 
 void update()
