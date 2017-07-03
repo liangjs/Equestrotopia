@@ -158,6 +158,7 @@ namespace Equestria
                         }
                     }
                 }
+#ifdef WMDWATER
                 // trans water mesh begin
                 if (file.substr(0, 6) == "meshs.") {
                     const double scale = 0.0017151092877468969;
@@ -176,6 +177,7 @@ namespace Equestria
                     nl[0] = nl[1] = nl[2] = N;
                 }
                 // trans water mesh end
+#endif
                 polygon.push_back(new Polygon(pl, nl, tl, material));
             }
             else if (op == "mtllib") { // external .mtl file

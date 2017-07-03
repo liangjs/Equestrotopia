@@ -76,15 +76,18 @@ cmake >= 2.8\par
 \end{minted}
 
 这样会在bin目录下产生raytracing,photontracing,passes,updation四个可执行文件，以及Equestrotopia和lodepng两个动态连接库文件。\par
-四个可执行文件的作用可由名称看出，passes是raytracing和photontracing的结合版。\par
 使用方法：
 \begin{minted}{shell}
     $ raytracing <directory>
     $ photontracing <directory>
     $ updation <directory> <picture_name>
 \end{minted}
-四个可执行文件的使用方法都是在命令行参数里指定一个目录的名称。\par
-该目录下应包含物体列表文件list.txt，光源参数文件light.txt，摄像机参数文件camera.txt，光子贡献比例文件photon\_contrib.txt，以及list.txt中列出的obj格式的文件和球体文件，和obj文件里列出的mtl格式的文件。
+
+raytracing会在指定目录下产生hitpoints.txt文件，记录hitpoint信息。\par
+photontracing会在指定目录下产生形如PhotonMap1.map的文件，记录光子信息。\par
+（passes是raytracing和photontracing两个程序的结合版，效果相当于先调用raytracing再调用photontracing，但速度稍快些。）\par
+updation会读取这些文件，产生一些png格式的图片。\par
+指定的目录下应包含物体列表文件list.txt，光源参数文件light.txt，摄像机参数文件camera.txt，光子贡献比例文件photon\_contrib.txt，以及list.txt中列出的obj格式的文件和球体文件，和obj文件里列出的mtl格式的文件。
 \vspace{10pt}\\
 list.txt文件格式：
 \begin{itemize}
@@ -113,18 +116,15 @@ camera.txt文件格式：
     \item 第一行，一个整数，表示球体个数。
     \item 接下来n行，每行4个实数和一个字符串，分别为该球体的三维坐标、半径、材质名称。
 \end{itemize}
-photon\_contrib.txt文件格式
+photon\_contrib.txt文件格式：
 \begin{itemize}
     \small \setlength{\itemsep}{.1em}
     \item 一个实数，表示光子对场景光亮度的贡献。（通常50--500较为合适）
 \end{itemize}
-raytracing会在指定目录下产生hitpoints.txt文件，记录hitpoint信息。\\
-photontracing会在指定目录下产生形如PhotonMap1.map的文件，记录光子信息。\\
-updation会读取这些文件，产生一些png格式的图片。
 \section{流程与算法}
 本作业参考了三篇论文\cite{ppm}\cite{ppr}\cite{lirui}，以及书\cite{pm}和Stanford CS148课件。\par
-BRDF参数及读取代码来自网站\url{http://www.merl.com/brdf/}\par
-png图片相关代码来自网站\url{http://lodev.org/lodepng/}
+BRDF参数及读取代码来自网站\ \url{http://www.merl.com/brdf/}\par
+png图片相关代码来自网站\ \url{http://lodev.org/lodepng/}
 \\
 \begin{algorithm}[H]
 \caption{Progressive Photon Mapping}
@@ -456,6 +456,11 @@ $l$与左子树有交并不能保证它就是最近交点，因为左包围盒�
 \mygraph{cyan_glass}{透明球体}
 \mygraph{water}{水}
 \section{总结}
+基于光线追踪的渲染方式，使Progressive Photon Mapping能产生看起来十分真实的图片。%
+我们小组的实现，相比该算法原作者的实现，加入了真实物体BRDF参数读取、%
+调节光子贡献比例等功能，以及数据结构、多线程等加速运算的方法。%
+在效果和效率上都有不小的提升。\par
+除了以上提到的代码编写和模型渲染工作，我们小组还与另一组合作，帮助渲染了400帧的流体运动动画。\par
 虽然效果不错，但本算法还有诸多可以提高的空间，例如：
 \begin{enumerate}
 \small \setlength{\itemsep}{.1em}

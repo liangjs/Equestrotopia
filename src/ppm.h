@@ -20,4 +20,6 @@ extern const double antiAliasMatrix[SAMPLE_RATE][SAMPLE_RATE];
 
 extern double PHOTON_CONTRIB;
 
+#define WMDWATER
+
 #endif

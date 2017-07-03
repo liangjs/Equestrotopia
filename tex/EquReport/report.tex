@@ -128,56 +128,15 @@ Photon Mapping作为全局光照领域的主流算法，以其高效率，能处
 \begin{red}[What's new]
 \vspace{-5pt}
 \begin{itemize}
-\item 支持Linux，后推出Windows版本
+\item 同时支持Linux和Windows操作系统
 \item 使用扩展版KD-Tree维护场景
 \item 利用KD-Tree加速邻近点查找
 \item 多线程
-\item 同时支持BRDF参数和Phong方程
+\item 同时支持BRDF参数和Phong光照方程
 \item 支持贴图
 \item 支持真球体
 \end{itemize}
 \end{red}
-\end{frame}
-
-\section{效果展示}
-\frame{\sectionpage}
-\frame{\mygraph{box2_ppm0}{PPM原作者的场景 0}}
-\frame{\mygraph{box2_ppm1}{PPM原作者的场景 1}}
-\frame{\mygraph{box2_ppm5}{PPM原作者的场景 5}}
-\frame{\mygraph{box2_ppm10}{PPM原作者的场景 10}}
-\frame{\mygraph{box2}{PPM原作者的场景 100 (33'13'')}}
-\frame{\mygraph{specular_ppm0}{镜面球体 0}}
-\frame{\mygraph{specular_ppm1}{镜面球体 1}}
-\frame{\mygraph{specular_ppm5}{镜面球体 5}}
-\frame{\mygraph{specular_ppm10}{镜面球体 10}}
-\frame{\mygraph{specular}{镜面球体 100 (6'56'')}}
-\frame{\mygraph{cyan_ppm0}{透明球体 0}}
-\frame{\mygraph{cyan_ppm1}{透明球体 1}}
-\frame{\mygraph{cyan_ppm5}{透明球体 5}}
-\frame{\mygraph{cyan_ppm10}{透明球体 10}}
-\frame{\mygraph{cyan_glass}{透明球体 100 (9'13'')}}
-\frame{\mygraph{water_ppm0}{水 0}}
-\frame{\mygraph{water_ppm1}{水 1}}
-\frame{\mygraph{water_ppm5}{水 5}}
-\frame{\mygraph{water_ppm10}{水 10}}
-\frame{\mygraph{water}{水 100 (23'05'')}}
-
-\section{环境与使用}
-\frame{\sectionpage}
-
-\begin{frame}[fragile]
-\begin{green}[编译与运行环境]
-Linux/Windows\par
-支持c++11的编译器\par
-GNU toolchain\par
-cmake >= 2.8\par
-\end{green}
-\begin{blue}[使用]
-\texttt{%
-\$ raytracing <directory>\\
-\$ photontracing <directory>\\
-\$ updation <directory> <picture\_name>}
-\end{blue}
 \end{frame}
 
 \section{总流程}
@@ -327,7 +286,8 @@ $\omega_o,\omega_i$分别为出射和入射方向。
 \begin{frame}
 \begin{blue}[光子追踪]
 每轮Photon Tracing Pass，从光源随机方向发射一批光子，追踪每个光子的运动轨迹，%
-考虑到效率，将光子能量的衰减用随机被物体表面吸收（或达到折反射阈值）来控制，%
+用Monte Carlo方法，用弹向各方向的概率估计各方向光亮度，%
+将光子能量的衰减也用随机被物体表面吸收（或达到折反射阈值）来控制，%
 这样每个光子的能量即为定值，折反射仅改变其颜色向量（通过BRDF计算）。
 \end{blue}
 \begin{green}[注]
@@ -426,6 +386,47 @@ L(\mathbf{x},\omega)\approx%
 \end{equation}
 \end{blue}
 \end{frame}
+
+\section{环境与使用}
+\frame{\sectionpage}
+
+\begin{frame}[fragile]
+\begin{green}[编译与运行环境]
+Linux/Windows\par
+支持c++11的编译器\par
+GNU toolchain\par
+cmake >= 2.8\par
+\end{green}
+\begin{blue}[使用]
+\texttt{%
+\$ raytracing <directory>\\
+\$ photontracing <directory>\\
+\$ updation <directory> <picture\_name>}
+\end{blue}
+\end{frame}
+
+\section{效果展示}
+\frame{\sectionpage}
+\frame{\mygraph{box2_ppm0}{PPM原作者的场景 0}}
+\frame{\mygraph{box2_ppm1}{PPM原作者的场景 1}}
+\frame{\mygraph{box2_ppm5}{PPM原作者的场景 5}}
+\frame{\mygraph{box2_ppm10}{PPM原作者的场景 10}}
+\frame{\mygraph{box2}{PPM原作者的场景 100 (33'13'')}}
+\frame{\mygraph{specular_ppm0}{镜面球体 0}}
+\frame{\mygraph{specular_ppm1}{镜面球体 1}}
+\frame{\mygraph{specular_ppm5}{镜面球体 5}}
+\frame{\mygraph{specular_ppm10}{镜面球体 10}}
+\frame{\mygraph{specular}{镜面球体 100 (6'56'')}}
+\frame{\mygraph{cyan_ppm0}{透明球体 0}}
+\frame{\mygraph{cyan_ppm1}{透明球体 1}}
+\frame{\mygraph{cyan_ppm5}{透明球体 5}}
+\frame{\mygraph{cyan_ppm10}{透明球体 10}}
+\frame{\mygraph{cyan_glass}{透明球体 100 (9'13'')}}
+\frame{\mygraph{water_ppm0}{水 0}}
+\frame{\mygraph{water_ppm1}{水 1}}
+\frame{\mygraph{water_ppm5}{水 5}}
+\frame{\mygraph{water_ppm10}{水 10}}
+\frame{\mygraph{water}{水 100 (23'05'')}}
 
 \section{参考文献}
 \begin{frame}[allowframebreaks]
